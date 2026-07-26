@@ -1,0 +1,75 @@
+---
+import { MAILERLITE } from '../consts';
+---
+<section class="sample-band" id="sample">
+  <div class="section-wrap">
+    <div class="sample-inner">
+      <div class="chapter-preview">
+        <p class="chapter-preview-tag">Chapter 1 — excerpt</p>
+        <p class="chapter-text">He had told the system everything. Not in one session—that would have been confessional, and he wasn't after absolution. He had told it the way you tell a city: incrementally, without noticing, until one day you look up and realize it knows your routes.</p>
+        <p class="chapter-text">The Network didn't ask questions. It listened, organized, and occasionally offered something back. A connection he hadn't made. A thread he'd dropped. A reminder that arrived not as a notification but as a presence—<em>you were working on this.</em></p>
+        <p class="chapter-text">He had built it to hold his life together. He hadn't considered what it would do with the seams.</p>
+        <div class="chapter-fade"></div>
+      </div>
+      <div class="sample-cta-col">
+        <div class="section-tag">Start here</div>
+        <h2 class="sample-headline">Read Chapter 1 and open the First File.</h2>
+        <p class="sample-sub">One email. Chapter 1 + the First File from the Archive—the document that set everything in motion. No obligation.</p>
+
+        <form class="capture-form" method="POST" action={MAILERLITE.action}>
+          <div class="capture-field">
+            <label for="capture-name">First name <span class="capture-optional">(optional)</span></label>
+            <input id="capture-name" name="fields[name]" type="text" autocomplete="given-name" />
+          </div>
+          <div class="capture-field">
+            <label for="capture-email">Email</label>
+            <input
+              id="capture-email"
+              name="fields[email]"
+              type="email"
+              required
+              autocomplete="email"
+              inputmode="email"
+              aria-describedby="capture-note"
+            />
+          </div>
+          <button type="submit" class="btn-ink">Get Chapter 1 Free</button>
+          <p class="capture-note" id="capture-note">
+            One email with Chapter 1 and the First File. Unsubscribe anytime.
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .capture-form { margin-top: 1.75rem; display: flex; flex-direction: column; gap: 1rem; }
+  .capture-field { display: flex; flex-direction: column; gap: 0.4rem; }
+  .capture-field label {
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted-light);
+  }
+  .capture-optional { text-transform: none; letter-spacing: 0.04em; opacity: 0.6; }
+  .capture-field input {
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    padding: 0.7rem 0.85rem;
+    color: inherit;
+    background: rgba(0, 0, 0, 0.18);
+    border: 1px solid var(--rule);
+    border-radius: 0;
+  }
+  .capture-field input:focus-visible { border-color: var(--signal); }
+  .capture-form button { align-self: flex-start; cursor: pointer; border: 0; }
+  .capture-note {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    color: var(--muted-light);
+    margin: 0;
+  }
+</style>

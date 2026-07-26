@@ -1,0 +1,51 @@
+---
+import { BUY_LINKS, BUY_LIVE } from '../consts';
+---
+<section class="buy-band" id="buy">
+  <div class="section-wrap-sm">
+    <div class="section-tag">Get the book</div>
+
+    {BUY_LIVE ? (
+      <>
+        <h2 class="buy-headline">Choose your format.</h2>
+        <p class="buy-sub">Buy anywhere, then confirm your purchase to unlock the Archive.</p>
+        <ul class="buy-list">
+          {BUY_LINKS.map((b) => (
+            <li>
+              <a href={b.url} class="btn-ink">{b.format}</a>
+              <span class="buy-note">{b.note}</span>
+            </li>
+          ))}
+        </ul>
+      </>
+    ) : (
+      <>
+        <h2 class="buy-headline">Not purchasable yet.</h2>
+        <p class="buy-sub">
+          Recursive Prophet isn't available to buy or preorder at the moment. Rather than park a
+          button that goes nowhere, here's the honest version: start with Chapter 1 and the First
+          File, and you'll be the first to know the day it can be bought.
+        </p>
+        <div class="btn-row">
+          <a href="#sample" class="btn-ink">Read Chapter 1 + Open the First File</a>
+        </div>
+        <p class="buy-formats">Planned formats: Ebook · Paperback · Hardcover. Audiobook to be confirmed.</p>
+      </>
+    )}
+  </div>
+</section>
+
+<style>
+  .buy-band { padding: 6rem 0; border-top: 1px solid var(--rule); }
+  .buy-headline { font-size: clamp(1.6rem, 3.2vw, 2.4rem); margin: 0.75rem 0 1rem; }
+  .buy-sub { max-width: 46ch; color: var(--muted-light); }
+  .buy-list { list-style: none; padding: 0; margin: 2rem 0 0; display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; }
+  .buy-list li { display: flex; flex-direction: column; gap: 0.4rem; }
+  .buy-note, .buy-formats {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    color: var(--muted-light);
+  }
+  .buy-formats { margin-top: 1.5rem; }
+</style>

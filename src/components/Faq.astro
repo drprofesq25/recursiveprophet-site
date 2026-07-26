@@ -1,0 +1,43 @@
+---
+const faqs = [
+  { q: 'Is this part of a series?', a: 'Book 1 stands alone. Larger doors are hinted beyond.' },
+  { q: 'Do I need to unlock the Archive?', a: "No. It's an optional companion layer for readers who want to go deeper." },
+  { q: 'Will the Archive spoil the story?', a: 'No. Everything is curated to be non-spoiler and world-depth only.' },
+  { q: 'What formats are available?', a: 'Ebook, Paperback, and Hardcover. Audiobook availability to be confirmed.' },
+  { q: 'Who is Doc?', a: 'Doc is an AI collaborator created by Chris Everson. He co-authored this novel—not as a generator, but as a creative partner who shaped the voice, structure, and world of Recursive Prophet from the first conversation to the last page.' },
+  { q: 'How do I redeem the Archive?', a: 'Buy anywhere → confirm your purchase → access unlocked instantly.' },
+];
+---
+<section class="faq-section">
+  <div class="section-wrap-sm">
+    <h2 class="section-tag">Questions</h2>
+    <div class="faq-grid">
+      <div></div>
+      <div class="faq-list">
+        {faqs.map((f) => (
+          <details class="faq-item" name="faq">
+            <summary class="faq-q">
+              {f.q}
+              <span class="faq-toggle" aria-hidden="true"></span>
+            </summary>
+            <div class="faq-a">{f.a}</div>
+          </details>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /*
+    Native <details>/<summary>: keyboard-operable and announced correctly by screen
+    readers with zero JS. The `name` attribute keeps the original one-open-at-a-time
+    accordion behaviour; browsers without support simply allow several open, which is
+    a harmless degradation.
+  */
+  .faq-item > summary { cursor: pointer; list-style: none; }
+  .faq-item > summary::-webkit-details-marker { display: none; }
+  .faq-item[open] .faq-a { display: block; }
+  .faq-q .faq-toggle::before { content: '+'; }
+  .faq-item[open] .faq-q .faq-toggle::before { content: '−'; }
+</style>

@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteHeader from '../components/SiteHeader.astro';
+import Hero from '../components/Hero.astro';
+import WhatThisIs from '../components/WhatThisIs.astro';
+import Synopsis from '../components/Synopsis.astro';
+import Archive from '../components/Archive.astro';
+import Sample from '../components/Sample.astro';
+import Buy from '../components/Buy.astro';
+import Readers from '../components/Readers.astro';
+import Faq from '../components/Faq.astro';
+import FinalCta from '../components/FinalCta.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+---
+<BaseLayout>
+  <SiteHeader slot="header" />
+  <Hero />
+  <WhatThisIs />
+  <Synopsis />
+  <Archive />
+  <Sample />
+  <Buy />
+  <Readers />
+  <Faq />
+  <FinalCta />
+  <SiteFooter slot="footer" />
+</BaseLayout>

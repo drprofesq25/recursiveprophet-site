@@ -1,0 +1,10 @@
+---
+import { FOOTER_LINKS, SITE } from '../consts';
+const year = new Date().getFullYear();
+---
+<footer>
+  <span>© {year} {SITE.authors} — {SITE.titleShort}</span>
+  <nav aria-label="Footer">
+    {FOOTER_LINKS.map((l) => <a href={l.href}>{l.label}</a>)}
+  </nav>
+</footer>
