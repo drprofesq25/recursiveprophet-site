@@ -45,6 +45,7 @@ npm run build               # static build to dist/ (ungated -- placeholders all
 npm run build:prod          # placeholder gate + build; THIS is what deploys
 npm run preview             # serve the built output
 npm run check:placeholders  # fails if any TKTK marker remains
+npm run audit               # axe-core + render audit of the built site
 ```
 
 Production deploys must run `build:prod`, never bare `build`. The bare form exists so local and
@@ -73,6 +74,14 @@ Apply `patch-webmaster/references/risk-and-approval-matrix.md`. In this repo spe
 Note the live DNS situation: `recursiveprophet.com` currently has **no apex A record**, while
 `n8n.recursiveprophet.com` resolves to the droplet. Any apex or `www` record is an R3 action and must
 not disturb the existing subdomain.
+
+## Design constraints
+
+`docs/DESIGN_CONSTRAINTS.md` records what the built site currently achieves and what it currently
+fails, all measured with `npm run audit`. Read it before a redesign: it lists the behaviours that
+must not regress (zero CLS, no mobile overflow, keyboard-operable FAQ disclosures, responsive cover
+negotiation, the request/weight budget) and the open WCAG AA contrast failures in the muted palette,
+with the exact ratios to clear.
 
 ## Content and voice constraints
 
