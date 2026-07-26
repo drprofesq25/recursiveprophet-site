@@ -8,3 +8,6 @@ dist/
 *.log
 # transient transfer artifacts
 *.tar.gz
+
+# audit output
+.audit/
