@@ -9,8 +9,13 @@ covers **this site only**. Identity, session protocol, and Network-wide rules st
 - **Canonical repo brief:** `network/AGENTS.md` — the tool-agnostic standing brief.
 - **Session protocol + sync gate:** `network/docs/SESSION_PROTOCOL.md`.
 - **Web-domain judgment:** `network/skills/patch-webmaster/SKILL.md`, plus
-  `references/recursive-prophet-site.md` (this property's profile) and
+  `references/recursive-prophet-site.md` (this property's profile),
+  `references/recursive-prophet-publishing.md` (publishing-to-web translation), and
   `references/risk-and-approval-matrix.md` (what needs approval before you touch it).
+- **Marketing routing summary:** `network/.agents/product-marketing.md`. Verify launch-sensitive
+  decisions in the current Notion publishing plan rather than treating a repo summary as live canon.
+- **Site contracts:** `docs/WEB_PUBLISHING_CONTRACT.md`, `docs/REDESIGN_ACCEPTANCE.md`, and
+  `docs/ANALYTICS_SPEC.md`.
 
 This file records site mechanics. It does not establish identity canon, and it does not override the
 canonical brief — where they disagree, the `network` repo wins.
@@ -81,7 +86,8 @@ not disturb the existing subdomain.
 fails, all measured with `npm run audit`. Read it before a redesign: it lists the behaviours that
 must not regress (zero CLS, no mobile overflow, keyboard-operable FAQ disclosures, responsive cover
 negotiation, the request/weight budget) and the open WCAG AA contrast failures in the muted palette,
-with the exact ratios to clear.
+with the exact ratios to clear. `docs/REDESIGN_ACCEPTANCE.md` defines the measurable release
+acceptance contract for the redesign; it does not itself approve deployment.
 
 ## Content and voice constraints
 
