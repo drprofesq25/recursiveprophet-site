@@ -1,3 +1,5 @@
+import { RP_EMAIL_CONSENT_V1 } from './content/email-consent/rp-email-consent-2026-07-28-v1';
+
 /**
  * Site-wide constants. Anything marked TKTK is a placeholder and MUST be resolved
  * before a production deploy -- `npm run check:placeholders` fails the build while
@@ -28,17 +30,26 @@ export const BUY_LINKS: ReadonlyArray<{ format: string; note: string; url: strin
 export const BUY_LIVE = false;
 
 /**
- * MailerLite embedded-form target for the Recursive Prophet audience.
- * MUST be an RP-only group -- never the Shaggy Palms audience (AGENTS.md "Hard separation").
+ * Public contract for the RP-only email-capture relay.
+ *
+ * The action remains gated until Forge supplies the exact verified production
+ * endpoint and Prof separately approves activation and production wiring.
+ * Consent version and source are authoritative server-side relay values; the
+ * browser does not submit either one.
  */
-export const MAILERLITE = {
-  action: 'TKTK-mailerlite-form-action',
-  groupNote: 'RP-only audience, isolated from Shaggy Palms',
+export const EMAIL_CAPTURE = {
+  action: 'TKTK-rp-capture-relay-action',
+  audienceNote: 'RP-only audience, isolated from Shaggy Palms',
+  consentVersion: RP_EMAIL_CONSENT_V1.version,
+  consentText: RP_EMAIL_CONSENT_V1.text,
+  privacyPath: '/email-list-privacy/',
+  requestedPath: '/first-file/requested/',
+  problemPath: '/first-file/problem/',
 } as const;
 
 export const FOOTER_LINKS: ReadonlyArray<{ label: string; href: string }> = [
   { label: 'Contact', href: 'TKTK-contact' },
   { label: 'Press Kit', href: 'TKTK-press-kit' },
-  { label: 'Privacy', href: 'TKTK-privacy' },
+  { label: 'Privacy', href: EMAIL_CAPTURE.privacyPath },
   { label: 'Terms', href: 'TKTK-terms' },
 ];

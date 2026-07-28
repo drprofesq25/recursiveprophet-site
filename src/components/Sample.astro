@@ -1,5 +1,5 @@
 ---
-import { MAILERLITE } from '../consts';
+import { EMAIL_CAPTURE } from '../consts';
 ---
 <section class="sample-band" id="sample">
   <div class="section-wrap">
@@ -16,23 +16,34 @@ import { MAILERLITE } from '../consts';
         <h2 class="sample-headline">Read Chapter 1 and open the First File.</h2>
         <p class="sample-sub">One email. Chapter 1 + the First File from the Archive—the document that set everything in motion. No obligation.</p>
 
-        <form class="capture-form" method="POST" action={MAILERLITE.action}>
+        <form class="capture-form" method="POST" action={EMAIL_CAPTURE.action}>
+          <div class="capture-honeypot" aria-hidden="true">
+            <label for="capture-website">Leave this field blank</label>
+            <input
+              id="capture-website"
+              name="website"
+              type="text"
+              tabindex="-1"
+              autocomplete="off"
+            />
+          </div>
           <div class="capture-field">
             <label for="capture-email">Email</label>
             <input
               id="capture-email"
-              name="fields[email]"
+              name="email"
               type="email"
               required
               autocomplete="email"
               inputmode="email"
-              aria-describedby="capture-note"
+              aria-describedby="capture-consent capture-privacy"
             />
           </div>
-          <button type="submit" class="btn-ink">Get Chapter 1 Free</button>
-          <p class="capture-note" id="capture-note">
-            One email with Chapter 1 and the First File. Unsubscribe anytime.
+          <p class="capture-note" id="capture-consent">{EMAIL_CAPTURE.consentText}</p>
+          <p class="capture-note" id="capture-privacy">
+            Read the <a href={EMAIL_CAPTURE.privacyPath}>Email List Privacy notice</a>.
           </p>
+          <button type="submit" class="btn-ink">Send confirmation</button>
         </form>
       </div>
     </div>
@@ -59,6 +70,13 @@ import { MAILERLITE } from '../consts';
     border-radius: 0;
   }
   .capture-field input:focus-visible { border-color: var(--signal); }
+  .capture-honeypot {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
   .capture-form button { align-self: flex-start; cursor: pointer; border: 0; }
   .capture-note {
     font-family: var(--mono);
@@ -67,4 +85,5 @@ import { MAILERLITE } from '../consts';
     color: var(--muted-light);
     margin: 0;
   }
+  .capture-note a { color: inherit; text-underline-offset: 0.2em; }
 </style>

@@ -6,5 +6,11 @@ import sitemap from '@astrojs/sitemap';
 export default defineConfig({
   site: 'https://recursiveprophet.com',
   trailingSlash: 'ignore',
-  integrations: [sitemap()],
+  integrations: [
+    sitemap({
+      // Relay landing states are useful only after a form POST. Keep them out
+      // of discovery surfaces while preserving direct static routes.
+      filter: (page) => !new URL(page).pathname.startsWith('/first-file/'),
+    }),
+  ],
 });
