@@ -5,8 +5,15 @@ import '../styles/global.css';
 interface Props {
   title?: string;
   description?: string;
+  ogType?: 'book' | 'website';
+  noindex?: boolean;
 }
-const { title = SITE.title, description = SITE.description } = Astro.props;
+const {
+  title = SITE.title,
+  description = SITE.description,
+  ogType = 'book',
+  noindex = false,
+} = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site ?? SITE.url).href;
 const ogImage = new URL(SITE.ogImage, Astro.site ?? SITE.url).href;
 ---
@@ -17,12 +24,13 @@ const ogImage = new URL(SITE.ogImage, Astro.site ?? SITE.url).href;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
     <link rel="canonical" href={canonical} />
     <meta name="author" content={SITE.authors} />
     <meta name="theme-color" content={SITE.themeColor} />
 
     <!-- Open Graph -->
-    <meta property="og:type" content="book" />
+    <meta property="og:type" content={ogType} />
     <meta property="og:site_name" content={SITE.titleShort} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
