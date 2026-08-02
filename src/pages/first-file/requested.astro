@@ -1,0 +1,13 @@
+---
+import InteriorPage from '../../components/InteriorPage.astro';
+---
+<InteriorPage
+  eyebrow="Confirmation requested"
+  title="Check your inbox."
+  description="Your Recursive Prophet reader request is waiting for email confirmation."
+  noIndex
+  actions={[{ label: 'Return to the book', href: '/#book', style: 'primary' }]}
+>
+  <p>A confirmation link is on its way. No reader material is sent until you confirm the address.</p>
+  <p>If it does not arrive within a few minutes, check spam, confirm the address was entered correctly, and try the form again.</p>
+</InteriorPage>

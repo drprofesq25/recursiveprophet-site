@@ -3,14 +3,14 @@ const faqs = [
   { q: 'Is this part of a series?', a: 'Book 1 stands alone. Larger doors are hinted beyond.' },
   { q: 'Do I need to unlock the Archive?', a: "No. It's an optional companion layer for readers who want to go deeper." },
   { q: 'Will the Archive spoil the story?', a: 'No. Everything is curated to be non-spoiler and world-depth only.' },
-  { q: 'What formats are available?', a: 'Ebook, Paperback, and Hardcover. Audiobook availability to be confirmed.' },
-  { q: 'Who is Doc?', a: 'Doc is an AI collaborator created by Chris Everson. He co-authored this novel—not as a generator, but as a creative partner who shaped the voice, structure, and world of Recursive Prophet from the first conversation to the last page.' },
-  { q: 'How do I redeem the Archive?', a: 'Buy anywhere → confirm your purchase → access unlocked instantly.' },
+  { q: 'When can I buy it?', a: 'A purchase link will appear only when there is a verified destination. The current launch plan is ebook and paperback.' },
+  { q: 'Who is D☉C?', a: 'D☉C is Chris Everson’s AI literary collaborator. His voice and authorship are part of the book’s world as well as its making; Chris remains the human author of record and bears final responsibility for the work.' },
+  { q: 'How will Archive access work?', a: 'The redemption mechanism is still being finalized. The site will not promise instant access until that path exists and has been tested.' },
 ];
 ---
-<section class="faq-section">
+<section class="faq-section" aria-labelledby="faq-heading">
   <div class="section-wrap-sm">
-    <h2 class="section-tag">Questions</h2>
+    <h2 class="section-tag" id="faq-heading">Questions</h2>
     <div class="faq-grid">
       <div></div>
       <div class="faq-list">
@@ -35,7 +35,7 @@ const faqs = [
     accordion behaviour; browsers without support simply allow several open, which is
     a harmless degradation.
   */
-  .faq-item > summary { cursor: pointer; list-style: none; }
+  .faq-item > summary { cursor: pointer; list-style: none; min-height: 2.75rem; }
   .faq-item > summary::-webkit-details-marker { display: none; }
   .faq-item[open] .faq-a { display: block; }
   .faq-q .faq-toggle::before { content: '+'; }

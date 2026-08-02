@@ -1,0 +1,59 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteHeader from './SiteHeader.astro';
+import SiteFooter from './SiteFooter.astro';
+import { SITE } from '../consts';
+
+interface Props {
+  eyebrow: string;
+  title: string;
+  description: string;
+  noIndex?: boolean;
+  ogType?: 'book' | 'website';
+  actions?: ReadonlyArray<{
+    label: string;
+    href: string;
+    style?: 'primary' | 'secondary';
+  }>;
+}
+
+const {
+  eyebrow,
+  title,
+  description,
+  noIndex = false,
+  ogType = 'website',
+  actions = [{ label: 'Return home', href: '/', style: 'primary' }],
+} = Astro.props;
+---
+<BaseLayout
+  title={`${title} — ${SITE.titleShort}`}
+  description={description}
+  noIndex={noIndex}
+  ogType={ogType}
+>
+  <SiteHeader slot="header" solid />
+  <section class="interior-page" aria-labelledby="interior-heading">
+    <div class="interior-signal" aria-hidden="true"></div>
+    <div class="interior-inner">
+      <p class="interior-eyebrow">{eyebrow}</p>
+      <h1 id="interior-heading">{title}</h1>
+      <div class="interior-copy">
+        <slot />
+      </div>
+      {actions.length > 0 && (
+        <div class="interior-actions">
+          {actions.map((action) => (
+            <a
+              href={action.href}
+              class={action.style === 'secondary' ? 'btn-secondary' : 'btn-primary'}
+            >
+              {action.label}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
+  <SiteFooter slot="footer" />
+</BaseLayout>
