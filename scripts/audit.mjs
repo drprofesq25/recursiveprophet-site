@@ -90,6 +90,7 @@ const VIEWPORTS = [
 
 const serious = new Set();   // distinct violation ids, not per-viewport repeats
 let kbFailures = 0;
+let contractFailures = 0;
 const seen = new Map();
 
 for (const vp of VIEWPORTS) {
@@ -207,15 +208,63 @@ for (const [k, v] of Object.entries(kb)) {
 }
 await ctx.close();
 
+// --- transactional route contracts: honest actions and no search indexing ---
+const routeCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+const routePage = await routeCtx.newPage();
+const routeContracts = [
+  {
+    path: '/first-file/requested/',
+    actionText: 'Return to the book',
+    actionHref: '/#book',
+  },
+  {
+    path: '/first-file/problem/',
+    actionText: 'Try the form again',
+    actionHref: '/#sample',
+  },
+];
+
+console.log('\n=== transactional route contracts ===');
+for (const contract of routeContracts) {
+  const response = await routePage.goto(new URL(contract.path, URL_).href, { waitUntil: 'load' });
+  const state = await routePage.evaluate(() => {
+    const action = document.querySelector('main .interior-actions a');
+    return {
+      robots: document.querySelector('meta[name="robots"]')?.getAttribute('content') ?? '',
+      actionText: action?.textContent?.trim() ?? '',
+      actionHref: action?.getAttribute('href') ?? '',
+    };
+  });
+  const checks = {
+    status: response?.status() === 200,
+    noIndex: state.robots.split(',').map((v) => v.trim()).includes('noindex'),
+    actionText: state.actionText === contract.actionText,
+    actionHref: state.actionHref === contract.actionHref,
+  };
+  for (const [name, passed] of Object.entries(checks)) {
+    if (!passed) contractFailures++;
+    console.log(`  ${passed ? 'PASS' : 'FAIL'} ${contract.path} ${name}`);
+  }
+}
+
+const sitemap = readFileSync(join(DIST, 'sitemap-0.xml'), 'utf8');
+for (const contract of routeContracts) {
+  const excluded = !sitemap.includes(new URL(contract.path, URL_).pathname);
+  if (!excluded) contractFailures++;
+  console.log(`  ${excluded ? 'PASS' : 'FAIL'} ${contract.path} excludedFromSitemap`);
+}
+await routeCtx.close();
+
 await browser.close();
 server.close();
 
 console.log(`\nScreenshots written to .audit/`);
-const total = serious.size + kbFailures;
+const total = serious.size + kbFailures + contractFailures;
 if (total) {
   const parts = [];
   if (serious.size) parts.push(`${serious.size} serious/critical a11y rule(s): ${[...serious].join(', ')}`);
   if (kbFailures) parts.push(`${kbFailures} keyboard check(s) failing`);
+  if (contractFailures) parts.push(`${contractFailures} transactional route contract check(s) failing`);
   console.log(`\n${parts.join('  |  ')}`);
   if (STRICT) { console.error('STRICT mode: failing.'); process.exit(1); }
   console.log('Reported, not gating. Use --strict to gate in CI.');

@@ -23,6 +23,8 @@ The capture-first redesign clears the inherited defects without regressing the b
   rendition rather than all six.
 - The static build produces four routes: `/`, `/first-file/requested/`,
   `/first-file/problem/`, and `/privacy/`.
+- The requested/problem transaction routes are `noindex`, excluded from the sitemap, and carry
+  route-specific recovery actions; the strict audit now asserts those contracts.
 
 The browser reported 8 requests and 186 KB fetched on desktop, and 8 requests and 163 KB on mobile.
 As before, use the deterministic `dist/` inventory—not browser request totals—as the weight budget.
@@ -98,4 +100,5 @@ npm run audit -- --strict # exit non-zero on serious/critical (for CI)
 ```
 
 Requires `playwright` and `axe-core` (devDependencies; Playwright fetches a Chromium build on first
-install). The script serves `dist/` itself — no separate server needed.
+install). The script serves `dist/` itself — no separate server needed. It also asserts the
+transactional requested/problem route actions, `noindex` directives, and sitemap exclusions.
