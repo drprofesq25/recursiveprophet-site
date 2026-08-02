@@ -1,10 +1,31 @@
 # Design constraints — measured, not asserted
 
-Input for the redesign. Everything here was measured against the built site on 2026-07-26 with
-`npm run audit` (axe-core + Playwright). Re-run it any time; it reports rather than opines.
+This file records measured design constraints and their current result. The original baseline was
+measured on 2026-07-26; the BQ-270 redesign result was measured on 2026-08-02 with `npm run audit`
+(axe-core + Playwright). Re-run it any time; it reports rather than opines.
 
 The point of this file is that a redesign should not have to rediscover these, and should not
 inherit the current palette's failures by assuming they were intentional.
+
+## BQ-270 redesign result — 2026-08-02
+
+The capture-first redesign clears the inherited defects without regressing the behaviors below.
+
+- **CLS 0** at both 1440px and 390px.
+- **No horizontal overflow** at either audited viewport.
+- **Zero serious or critical axe findings** at either viewport; the former muted-palette contrast
+  failure is cleared.
+- **Six FAQ disclosures pass all four keyboard checks** using native `<details name="faq">`.
+- **Responsive cover negotiation remains correct:** `rp-cover-450.webp` at 350px desktop and
+  `rp-cover-300.webp` at 215px mobile.
+- **213 DOM nodes** on the home page and a deterministic build weight of **399 KB in `dist/`**:
+  213 KB JPG, 142 KB WebP, 27 KB HTML, 17 KB CSS, and 1 KB XML. A visitor receives one cover
+  rendition rather than all six.
+- The static build produces four routes: `/`, `/first-file/requested/`,
+  `/first-file/problem/`, and `/privacy/`.
+
+The browser reported 8 requests and 186 KB fetched on desktop, and 8 requests and 163 KB on mobile.
+As before, use the deterministic `dist/` inventory—not browser request totals—as the weight budget.
 
 ## Must not regress
 
@@ -32,7 +53,7 @@ These pass today. A redesign that breaks one has traded something real for somet
 Wall-clock timings (FCP, LCP) are deliberately not tracked — they are meaningless on a contended
 box. Measure speed against a real host once deployed.
 
-## Open defect: the muted palette fails WCAG AA
+## Historical baseline defect: the muted palette failed WCAG AA
 
 One axe violation, impact **serious**, 21 nodes, 7 distinct colour pairs. All of it small muted
 text. AA needs **4.5:1** for normal text and 3:1 for large text (≥24px, or ≥18.66px bold) — every
@@ -48,9 +69,8 @@ pair below is normal-size, so 4.5:1 applies to all of them.
 | `#b8792a` | `#f0ebe0` | 3.04 | design (amber accent) | emphasised `<em>` phrases |
 | `#7a7268` | `#ede7d9` | 3.84 | design (`--muted`) | sample sub-copy |
 
-**Deliberately not fixed.** A redesign is planned, and patching these hex values would be work
-thrown away. The durable output is the requirement, recorded here. If the redesign keeps a muted
-palette, these are the numbers it has to clear.
+**Resolved by BQ-270.** These values remain here as the measured 2026-07-26 baseline and as a warning
+against reintroducing the old muted tokens. The redesigned palette clears the strict axe audit.
 
 For reference, a single `--muted-light: #6b6459` clears AA on all three current backgrounds
 (4.92 / 4.74 / 5.85) and would resolve 22 of the node hits in one token — useful if the existing
@@ -60,9 +80,9 @@ Judgement worth carrying forward: the failures on **form labels, body copy, foot
 emphasised text** are usability problems, not checkbox problems — that text carries meaning. Purely
 decorative eyebrow labels are more arguable, though `.section-tag` is doing wayfinding work.
 
-## Two items that are mine, not the design's
+## Historical implementation defects, not design intent
 
-Do not inherit these as intentional:
+These were removed by BQ-270 and must not be reintroduced as intentional:
 
 1. **`.capture-optional` at 1.60:1** — the worst contrast on the page, introduced in the capture-form
    CSS on 2026-07-26, not part of the original draft.

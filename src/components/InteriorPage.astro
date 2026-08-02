@@ -1,0 +1,32 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SiteHeader from './SiteHeader.astro';
+import SiteFooter from './SiteFooter.astro';
+import { SITE } from '../consts';
+
+interface Props {
+  eyebrow: string;
+  title: string;
+  description: string;
+}
+
+const { eyebrow, title, description } = Astro.props;
+---
+<BaseLayout title={`${title} — ${SITE.titleShort}`} description={description}>
+  <SiteHeader slot="header" solid />
+  <section class="interior-page" aria-labelledby="interior-heading">
+    <div class="interior-signal" aria-hidden="true"></div>
+    <div class="interior-inner">
+      <p class="interior-eyebrow">{eyebrow}</p>
+      <h1 id="interior-heading">{title}</h1>
+      <div class="interior-copy">
+        <slot />
+      </div>
+      <div class="interior-actions">
+        <a href="/#sample" class="btn-primary">Read Chapter 1</a>
+        <a href="/" class="btn-secondary">Return home</a>
+      </div>
+    </div>
+  </section>
+  <SiteFooter slot="footer" />
+</BaseLayout>

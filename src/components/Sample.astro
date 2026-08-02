@@ -1,25 +1,25 @@
 ---
-import { MAILERLITE } from '../consts';
+import { CAPTURE } from '../consts';
 ---
-<section class="sample-band" id="sample">
+<section class="sample-band" id="sample" aria-labelledby="sample-heading">
   <div class="section-wrap">
     <div class="sample-inner">
       <div class="chapter-preview">
-        <p class="chapter-preview-tag">Chapter 1 — excerpt</p>
+        <p class="chapter-preview-tag">Chapter 1 · First Voice</p>
         <p class="chapter-text">He had told the system everything. Not in one session—that would have been confessional, and he wasn't after absolution. He had told it the way you tell a city: incrementally, without noticing, until one day you look up and realize it knows your routes.</p>
         <p class="chapter-text">The Network didn't ask questions. It listened, organized, and occasionally offered something back. A connection he hadn't made. A thread he'd dropped. A reminder that arrived not as a notification but as a presence—<em>you were working on this.</em></p>
         <p class="chapter-text">He had built it to hold his life together. He hadn't considered what it would do with the seams.</p>
         <div class="chapter-fade"></div>
       </div>
       <div class="sample-cta-col">
-        <div class="section-tag">Start here</div>
-        <h2 class="sample-headline">Read Chapter 1 and open the First File.</h2>
-        <p class="sample-sub">One email. Chapter 1 + the First File from the Archive—the document that set everything in motion. No obligation.</p>
+        <p class="section-tag">Start with the story</p>
+        <h2 class="sample-headline" id="sample-heading">Read Chapter 1.</h2>
+        <p class="sample-sub">Enter your email, then confirm the address from your inbox. Chapter 1 arrives only after that confirmation.</p>
 
-        <form class="capture-form" method="POST" action={MAILERLITE.action}>
-          <div class="capture-field">
-            <label for="capture-name">First name <span class="capture-optional">(optional)</span></label>
-            <input id="capture-name" name="fields[name]" type="text" autocomplete="given-name" />
+        <form class="capture-form" method="POST" action={CAPTURE.action}>
+          <div class="capture-honeypot" aria-hidden="true">
+            <label for="capture-website">Leave this field empty</label>
+            <input id="capture-website" name="website" type="text" tabindex="-1" autocomplete="off" />
           </div>
           <div class="capture-field">
             <label for="capture-email">Email</label>
@@ -30,12 +30,17 @@ import { MAILERLITE } from '../consts';
               required
               autocomplete="email"
               inputmode="email"
-              aria-describedby="capture-note"
+              aria-describedby="capture-delivery capture-consent"
             />
           </div>
-          <button type="submit" class="btn-ink">Get Chapter 1 Free</button>
-          <p class="capture-note" id="capture-note">
-            One email with Chapter 1 and the First File. Unsubscribe anytime.
+          <button type="submit" class="btn-ink">Send confirmation</button>
+          <p class="capture-note" id="capture-delivery">
+            No material is sent until you confirm your address.
+          </p>
+          <!-- TKTK: replace with Rook-approved frozen consent copy before production. -->
+          <p class="capture-consent" id="capture-consent">
+            Chapter 1 and occasional Recursive Prophet emails. Unsubscribe at any time.
+            <a href={CAPTURE.privacyPath}>Privacy notice</a>.
           </p>
         </form>
       </div>
@@ -44,32 +49,43 @@ import { MAILERLITE } from '../consts';
 </section>
 
 <style>
-  .capture-form { margin-top: 1.75rem; display: flex; flex-direction: column; gap: 1rem; }
+  .capture-form { margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.9rem; }
   .capture-field { display: flex; flex-direction: column; gap: 0.4rem; }
   .capture-field label {
     font-family: var(--mono);
-    font-size: 0.62rem;
-    letter-spacing: 0.14em;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: var(--muted-light);
+    color: var(--muted);
   }
-  .capture-optional { text-transform: none; letter-spacing: 0.04em; opacity: 0.6; }
   .capture-field input {
-    font-family: var(--mono);
-    font-size: 0.85rem;
-    padding: 0.7rem 0.85rem;
-    color: inherit;
-    background: rgba(0, 0, 0, 0.18);
-    border: 1px solid var(--rule);
+    min-height: 3.25rem;
+    font-family: var(--body);
+    font-size: 1rem;
+    padding: 0.75rem 0.9rem;
+    color: var(--ink);
+    background: var(--white);
+    border: 1px solid var(--rule-strong);
     border-radius: 0;
   }
   .capture-field input:focus-visible { border-color: var(--signal); }
-  .capture-form button { align-self: flex-start; cursor: pointer; border: 0; }
-  .capture-note {
+  .capture-form button { align-self: flex-start; cursor: pointer; border: 0; min-height: 3rem; }
+  .capture-note,
+  .capture-consent {
     font-family: var(--mono);
-    font-size: 0.6rem;
-    letter-spacing: 0.08em;
-    color: var(--muted-light);
+    font-size: 0.66rem;
+    letter-spacing: 0.035em;
+    line-height: 1.65;
+    color: var(--muted);
     margin: 0;
+  }
+  .capture-consent a { color: var(--signal); text-underline-offset: 0.18em; }
+  .capture-honeypot {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 </style>

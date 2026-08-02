@@ -1,18 +1,23 @@
-<section class="hero" id="book">
-  <div class="signal-line"></div>
+---
+import { BUY_LIVE } from '../consts';
+---
+<section class="hero" id="book" aria-labelledby="book-title">
+  <div class="signal-line" aria-hidden="true"></div>
   <div class="hero-text">
-    <p class="hero-annotation">file.001 — primary record</p>
-    <h1>Recursive<br>Prophet<em>A Novel</em></h1>
-    <p class="hero-subhead">A novel about building a system to become your most complete self—until it reflects a revised version of you back.</p>
-    <p class="hero-italic">A literary thriller about memory, authorship, and the danger of losing the parts of yourself you can't file.</p>
+    <p class="hero-annotation">A literary thriller · Book One</p>
+    <h1 id="book-title">Recursive<br />Prophet<em>A Novel</em></h1>
+    <p class="hero-subhead">A father built a system to help him stay whole. It started reflecting a version of him back.</p>
+    <p class="hero-italic">Told through story and conversation, with recovered fragments from inside the Network.</p>
     <div class="hero-btns">
-      <a href="#buy" class="btn-primary">Buy / Preorder</a>
-      <a href="#sample" class="btn-secondary">Read Chapter 1 + Open the First File</a>
+      <a href="#sample" class="btn-primary">Read Chapter 1</a>
+      <a href={BUY_LIVE ? '#buy' : '#story'} class="btn-secondary">
+        {BUY_LIVE ? 'Buy the book' : 'What the story is'}
+      </a>
     </div>
-    <p class="hero-invite">If you're new here: start with Chapter 1 + the First File.</p>
+    <p class="hero-invite">Christopher Everson and D☉C · Publication planned for September 13, 2026</p>
   </div>
   <div class="hero-right">
-    <div style="position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;gap:1.5rem;">
+    <figure class="cover-figure">
       <div class="cover-wrapper">
         <picture>
           <source
@@ -34,11 +39,10 @@
         </picture>
         <div class="cover-shadow"></div>
       </div>
-      <div class="file-annotation">
-        CHRIS EVERSON &amp; DOC<br>
-        <span style="color:rgba(240,235,224,0.18)">— with an AI collaborator —</span><br>
-        <span style="color:rgba(92,79,214,0.35);margin-top:0.5rem;display:block;">▸ archive access included</span>
-      </div>
-    </div>
+      <figcaption class="file-annotation">
+        <span>Working cover · final production master pending</span>
+        <span>Literary thriller · memory · authorship · ordinary life</span>
+      </figcaption>
+    </figure>
   </div>
 </section>

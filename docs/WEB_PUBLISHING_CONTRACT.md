@@ -91,3 +91,16 @@ Before any launch-sensitive implementation, verify:
 - Hosting/deployment target
 - Archive fulfillment mechanism
 
+## Preserved source conflict — 2026-08-02
+
+The BQ-262 relay contract and this document's 2026-07-27 posture still describe a Chapter 1 plus
+First File payload. Vira's newer July 29 Rev 2 launch brief retires the First File and instead names
+Chapter 1 plus Welcome to the Archive. The exact frozen Rook-approved consent sentence was not
+available in the reviewed sources.
+
+BQ-270 therefore makes no owner decision between those records. Its public-facing working copy
+promises Chapter 1 only, while the local form keeps BQ-262's email-only field, `website` honeypot,
+submit label, and requested/problem route contract. The production action URL and consent copy stay
+marked as release-blocking placeholders. `build:prod` must remain closed until Vira/Doc reconcile the
+payload and Rook supplies the approved consent language.
+

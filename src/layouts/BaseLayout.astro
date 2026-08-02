@@ -54,15 +54,14 @@ const ogImage = new URL(SITE.ogImage, Astro.site ?? SITE.url).href;
 </html>
 
 <style is:global>
-  /* Keyboard-only skip link: visible on focus, out of the way otherwise. */
   .skip-link {
     position: absolute;
     left: -9999px;
     top: 0;
     z-index: 999;
     padding: 0.75rem 1.25rem;
-    background: #f0ebe0;
-    color: #0d0d10;
+    background: var(--paper, #f3eee4);
+    color: var(--ink, #171412);
     font-family: var(--mono, monospace);
     font-size: 0.75rem;
     letter-spacing: 0.08em;
@@ -72,9 +71,8 @@ const ogImage = new URL(SITE.ogImage, Astro.site ?? SITE.url).href;
     left: 1rem;
     top: 1rem;
   }
-  /* Never suppress focus visibility. */
   :focus-visible {
-    outline: 2px solid #5c4fd6;
-    outline-offset: 3px;
+    outline: 3px solid var(--focus, #a79dff);
+    outline-offset: 4px;
   }
 </style>
