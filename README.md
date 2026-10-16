@@ -32,13 +32,14 @@ docs/                        build notes and audits
 
 ## Unresolved before this can go live
 
-Everything below is marked `TKTK` in `src/consts.ts` and blocks `npm run build:prod`:
+The release gate scans shippable source (`src/` and `public/`). The following values remain marked
+`TKTK` and block `npm run build:prod`:
 
-- **MailerLite form action** for the RP-only audience (must be isolated from Shaggy Palms).
-- **Retailer URLs** for ebook / paperback / hardcover. Until one exists, `BUY_LIVE = false` and the
-  Buy section says so plainly rather than showing a button that does nothing.
-- **Contact, Press Kit, Privacy, Terms** destinations.
+- **Capture-relay action** for the Recursive Prophet-only audience.
+- **Active privacy-contact email** and **public P.O. box** for the approved privacy notice.
+- **Contact destination** for the approved footer.
+- **Final approved cover master** to replace the working responsive renditions.
 
-Also outstanding, and not code: `recursiveprophet.com` has **no apex A record** today. Pointing it is
-an R3 action requiring explicit approval, and must not disturb `n8n.recursiveprophet.com`, which
-resolves to the droplet.
+Retailer links are deliberately absent and non-blocking while the site remains capture-first.
+Hosting, deployment, DNS, live automation, and subscriber-data actions remain separate R2/R3 work
+requiring exact approval; unrelated `n8n.recursiveprophet.com` records must not be disturbed.

@@ -5,9 +5,10 @@
  *   npm run audit            report only, always exits 0
  *   npm run audit -- --strict  exit 1 on any serious/critical violation (for CI)
  *
- * Serves ./dist itself, runs axe-core at desktop and mobile widths, checks the FAQ
- * is keyboard-operable, reports which cover rendition the browser negotiated, and
- * writes full-page screenshots to .audit/ (gitignored).
+ * Serves ./dist itself, runs axe-core at desktop and mobile widths, checks the FAQ,
+ * capture forms, approved metadata/copy, and transaction-route contracts, reports
+ * which cover rendition the browser negotiated, and writes full-page screenshots
+ * to .audit/ (gitignored).
  *
  * NOTE ON TIMINGS: wall-clock numbers (FCP/LCP) are deliberately NOT reported.
  * They are meaningless on a contended CI box or sandbox -- measure speed against a
@@ -15,7 +16,7 @@
  * because they do not depend on machine speed.
  */
 import { createServer } from 'node:http';
-import { readFile, mkdir, readFileSync, existsSync } from 'node:fs';
+import { readFile, readFileSync, existsSync } from 'node:fs';
 import { readFile as read } from 'node:fs/promises';
 import { mkdirSync } from 'node:fs';
 import { join, extname, resolve } from 'node:path';
@@ -208,19 +209,86 @@ for (const [k, v] of Object.entries(kb)) {
 }
 await ctx.close();
 
+// --- approved home-page copy, metadata, and dual-form contract ---
+const homeCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const homePage = await homeCtx.newPage();
+await homePage.goto(URL_, { waitUntil: 'load' });
+const homeContract = await homePage.evaluate(() => {
+  const text = document.body.textContent ?? '';
+  const normalized = (value) => value.replace(/\s+/g, ' ').trim();
+  const expectedConsent = normalized(
+    'Enter your email and confirm your address to receive Chapter One and an invitation to the Archive, followed the next day by the first preserved conversation between Chris Everson and T∆RS. You’ll also receive occasional emails from Chris about Recursive Prophet—including book news, selected artifacts, and transmissions from the Archive—and you can unsubscribe at any time.'
+  );
+  const forms = [...document.querySelectorAll('form[data-capture-form]')];
+  return {
+    title: document.title,
+    description: document.querySelector('meta[name="description"]')?.getAttribute('content') ?? '',
+    ogTitle: document.querySelector('meta[property="og:title"]')?.getAttribute('content') ?? '',
+    ogDescription: document.querySelector('meta[property="og:description"]')?.getAttribute('content') ?? '',
+    formCount: forms.length,
+    formsValid: forms.every((form) => {
+      const consent = form.querySelector('.capture-consent');
+      const privacy = form.querySelector('.capture-privacy a');
+      const email = form.querySelector('input[type="email"]');
+      const honeypot = form.querySelector('input[name="website"]');
+      const button = form.querySelector('button[type="submit"]');
+      return normalized(consent?.textContent ?? '') === expectedConsent &&
+        privacy?.textContent?.trim() === 'Email-list privacy' &&
+        privacy?.getAttribute('href') === '/privacy/' &&
+        email?.getAttribute('name') === 'fields[email]' &&
+        email?.hasAttribute('required') &&
+        honeypot !== null &&
+        button?.textContent?.trim() === 'Send Me Chapter One';
+    }),
+    allBridgesTargetForm: [...document.querySelectorAll('.section-bridge a')]
+      .every((link) => link.getAttribute('href') === '#sample'),
+    hasRetiredFirstFile: /First File|Open the First File/i.test(text),
+    hasStaleDate: text.includes('September 13, 2026'),
+    hasOldUnverifiedExcerpt: text.includes('He had told the system everything'),
+  };
+});
+
+const homeChecks = {
+  pageTitle: homeContract.title === 'Recursive Prophet — A Speculative Novel by Chris Everson',
+  metaDescription: homeContract.description === 'A restless creator builds a Network of AI assistants to become his most complete self. The system works, but the line between assistance and authorship blurs.',
+  socialTitle: homeContract.ogTitle === 'He Built the Network. It Began Shaping Him in Return.',
+  socialDescription: homeContract.ogDescription === 'An intimate speculative novel about personal identity, creative ownership, and what remains ours when the tools that expand our lives begin shaping them.',
+  twoCaptureForms: homeContract.formCount === 2,
+  captureFormsMatchMaster: homeContract.formsValid,
+  sectionBridgesTargetForm: homeContract.allBridgesTargetForm,
+  firstFileRetired: !homeContract.hasRetiredFirstFile,
+  staleDateRemoved: !homeContract.hasStaleDate,
+  unverifiedExcerptRemoved: !homeContract.hasOldUnverifiedExcerpt,
+};
+
+console.log('\n=== approved home-page contract ===');
+for (const [name, passed] of Object.entries(homeChecks)) {
+  if (!passed) contractFailures++;
+  console.log(`  ${passed ? 'PASS' : 'FAIL'} ${name}`);
+}
+await homeCtx.close();
+
 // --- transactional route contracts: honest actions and no search indexing ---
 const routeCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
 const routePage = await routeCtx.newPage();
 const routeContracts = [
   {
-    path: '/first-file/requested/',
-    actionText: 'Return to the book',
+    path: '/chapter-one/requested/',
+    heading: 'One more step.',
+    actionText: 'Return to the Book',
     actionHref: '/#book',
   },
   {
-    path: '/first-file/problem/',
-    actionText: 'Try the form again',
+    path: '/chapter-one/problem/',
+    heading: 'The Archive did not open.',
+    actionText: 'Try Again',
     actionHref: '/#sample',
+  },
+  {
+    path: '/chapter-one/confirmed/',
+    heading: 'Welcome to the Archive.',
+    actionText: 'Return to the Book',
+    actionHref: '/#book',
   },
 ];
 
@@ -231,6 +299,7 @@ for (const contract of routeContracts) {
     const action = document.querySelector('main .interior-actions a');
     return {
       robots: document.querySelector('meta[name="robots"]')?.getAttribute('content') ?? '',
+      heading: document.querySelector('main h1')?.textContent?.trim() ?? '',
       actionText: action?.textContent?.trim() ?? '',
       actionHref: action?.getAttribute('href') ?? '',
     };
@@ -238,6 +307,7 @@ for (const contract of routeContracts) {
   const checks = {
     status: response?.status() === 200,
     noIndex: state.robots.split(',').map((v) => v.trim()).includes('noindex'),
+    heading: state.heading === contract.heading,
     actionText: state.actionText === contract.actionText,
     actionHref: state.actionHref === contract.actionHref,
   };
@@ -245,6 +315,10 @@ for (const contract of routeContracts) {
     if (!passed) contractFailures++;
     console.log(`  ${passed ? 'PASS' : 'FAIL'} ${contract.path} ${name}`);
   }
+  await routePage.screenshot({
+    path: join(OUT, `route-${contract.path.split('/').filter(Boolean).pop()}.png`),
+    fullPage: true,
+  });
 }
 
 const sitemap = readFileSync(join(DIST, 'sitemap-0.xml'), 'utf8');
@@ -253,7 +327,51 @@ for (const contract of routeContracts) {
   if (!excluded) contractFailures++;
   console.log(`  ${excluded ? 'PASS' : 'FAIL'} ${contract.path} excludedFromSitemap`);
 }
+
+const legacyRedirects = [
+  ['/first-file/requested/', '/chapter-one/requested'],
+  ['/first-file/problem/', '/chapter-one/problem'],
+];
+for (const [legacyPath, targetPath] of legacyRedirects) {
+  const html = readFileSync(join(DIST, legacyPath, 'index.html'), 'utf8');
+  const redirects = html.includes(`url=${targetPath}`) &&
+    html.includes(`href="${targetPath}"`) &&
+    html.includes('content="noindex"');
+  if (!redirects) contractFailures++;
+  console.log(`  ${redirects ? 'PASS' : 'FAIL'} ${legacyPath} redirectsTo ${targetPath}`);
+}
 await routeCtx.close();
+
+// --- privacy notice: approved scope, visible consent version, and review screenshot ---
+const privacyCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+const privacyPage = await privacyCtx.newPage();
+const privacyResponse = await privacyPage.goto(new URL('/privacy/', URL_).href, { waitUntil: 'load' });
+const privacyState = await privacyPage.evaluate(() => {
+  const text = document.body.textContent ?? '';
+  return {
+    heading: document.querySelector('main h1')?.textContent?.trim() ?? '',
+    hasUpdatedDate: text.includes('October 16, 2026'),
+    hasConsentVersion: text.includes('rp-email-consent-2026-10-16-v2'),
+    hasProviderScope: text.includes('MailerLite processes subscriber information'),
+    hasRights: [...document.querySelectorAll('main h2')]
+      .some((heading) => heading.textContent?.trim() === 'Your choices'),
+  };
+});
+const privacyChecks = {
+  status: privacyResponse?.status() === 200,
+  heading: privacyState.heading === 'Email-list privacy',
+  updatedDate: privacyState.hasUpdatedDate,
+  consentVersion: privacyState.hasConsentVersion,
+  providerScope: privacyState.hasProviderScope,
+  rightsSection: privacyState.hasRights,
+};
+console.log('\n=== privacy notice contract ===');
+for (const [name, passed] of Object.entries(privacyChecks)) {
+  if (!passed) contractFailures++;
+  console.log(`  ${passed ? 'PASS' : 'FAIL'} ${name}`);
+}
+await privacyPage.screenshot({ path: join(OUT, 'privacy-mobile.png'), fullPage: true });
+await privacyCtx.close();
 
 await browser.close();
 server.close();

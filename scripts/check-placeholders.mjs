@@ -10,7 +10,7 @@ import { join, extname } from 'node:path';
 const ROOT = process.cwd();
 const SKIP_DIRS = new Set(['node_modules', 'dist', '.git', '.astro', 'reference']);
 const CHECK_EXT = new Set(['.astro', '.ts', '.js', '.mjs', '.md', '.css', '.html', '.json']);
-const SELF = 'scripts/check-placeholders.mjs';
+const CHECK_ROOTS = ['src', 'public'];
 const TOKEN = /TKTK/;
 
 const hits = [];
@@ -21,13 +21,12 @@ function walk(dir) {
     if (SKIP_DIRS.has(name)) continue;
     if (statSync(full).isDirectory()) { walk(full); continue; }
     if (!CHECK_EXT.has(extname(name))) continue;
-    if (rel === SELF || rel === 'AGENTS.md' || rel === 'README.md') continue;
     readFileSync(full, 'utf8').split('\n').forEach((line, i) => {
       if (TOKEN.test(line)) hits.push(`${rel}:${i + 1}  ${line.trim().slice(0, 110)}`);
     });
   }
 }
-walk(ROOT);
+for (const root of CHECK_ROOTS) walk(join(ROOT, root));
 
 if (hits.length) {
   console.error(`\nBLOCKED: ${hits.length} unresolved placeholder(s). These must not ship:\n`);

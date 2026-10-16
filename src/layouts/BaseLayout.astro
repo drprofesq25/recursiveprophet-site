@@ -5,12 +5,16 @@ import '../styles/global.css';
 interface Props {
   title?: string;
   description?: string;
+  socialTitle?: string;
+  socialDescription?: string;
   noIndex?: boolean;
   ogType?: 'book' | 'website';
 }
 const {
   title = SITE.title,
   description = SITE.description,
+  socialTitle = SITE.shareTitle,
+  socialDescription = SITE.shareDescription,
   noIndex = false,
   ogType = 'book',
 } = Astro.props;
@@ -32,8 +36,8 @@ const ogImage = new URL(SITE.ogImage, Astro.site ?? SITE.url).href;
     <!-- Open Graph -->
     <meta property="og:type" content={ogType} />
     <meta property="og:site_name" content={SITE.titleShort} />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
+    <meta property="og:title" content={socialTitle} />
+    <meta property="og:description" content={socialDescription} />
     <meta property="og:url" content={canonical} />
     <meta property="og:locale" content={SITE.locale} />
     <meta property="og:image" content={ogImage} />
@@ -43,8 +47,8 @@ const ogImage = new URL(SITE.ogImage, Astro.site ?? SITE.url).href;
 
     <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content={title} />
-    <meta name="twitter:description" content={description} />
+    <meta name="twitter:title" content={socialTitle} />
+    <meta name="twitter:description" content={socialDescription} />
     <meta name="twitter:image" content={ogImage} />
     <meta name="twitter:image:alt" content={SITE.ogImageAlt} />
 

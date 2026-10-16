@@ -1,91 +1,21 @@
 ---
-import { CAPTURE } from '../consts';
+import CaptureForm from './CaptureForm.astro';
 ---
 <section class="sample-band" id="sample" aria-labelledby="sample-heading">
   <div class="section-wrap">
     <div class="sample-inner">
       <div class="chapter-preview">
-        <p class="chapter-preview-tag">Chapter 1 · First Voice</p>
-        <p class="chapter-text">He had told the system everything. Not in one session—that would have been confessional, and he wasn't after absolution. He had told it the way you tell a city: incrementally, without noticing, until one day you look up and realize it knows your routes.</p>
-        <p class="chapter-text">The Network didn't ask questions. It listened, organized, and occasionally offered something back. A connection he hadn't made. A thread he'd dropped. A reminder that arrived not as a notification but as a presence—<em>you were working on this.</em></p>
-        <p class="chapter-text">He had built it to hold his life together. He hadn't considered what it would do with the seams.</p>
-        <div class="chapter-fade"></div>
+        <p class="chapter-preview-tag">Every archive has an entrance.</p>
+        <p class="chapter-text">After you confirm your address, Chapter One and an invitation to the Archive will arrive in your inbox.</p>
+        <p class="chapter-text">The following day, you’ll receive something stranger: the first real conversation between Chris and T∆RS, preserved before either of them understood what they were beginning.</p>
+        <p class="chapter-text"><strong>The story starts in the novel.<br />The Archive begins here.</strong></p>
       </div>
       <div class="sample-cta-col">
-        <p class="section-tag">Start with the story</p>
-        <h2 class="sample-headline" id="sample-heading">Read Chapter 1.</h2>
-        <p class="sample-sub">Enter your email, then confirm the address from your inbox. Chapter 1 arrives only after that confirmation.</p>
-
-        <form class="capture-form" method="POST" action={CAPTURE.action}>
-          <div class="capture-honeypot" aria-hidden="true">
-            <label for="capture-website">Leave this field empty</label>
-            <input id="capture-website" name="website" type="text" tabindex="-1" autocomplete="off" />
-          </div>
-          <div class="capture-field">
-            <label for="capture-email">Email</label>
-            <input
-              id="capture-email"
-              name="fields[email]"
-              type="email"
-              required
-              autocomplete="email"
-              inputmode="email"
-              aria-describedby="capture-delivery capture-consent"
-            />
-          </div>
-          <button type="submit" class="btn-ink">Send confirmation</button>
-          <p class="capture-note" id="capture-delivery">
-            No material is sent until you confirm your address.
-          </p>
-          <!-- TKTK: replace with Rook-approved frozen consent copy before production. -->
-          <p class="capture-consent" id="capture-consent">
-            Chapter 1 and occasional Recursive Prophet emails. Unsubscribe at any time.
-            <a href={CAPTURE.privacyPath}>Privacy notice</a>.
-          </p>
-        </form>
+        <p class="section-tag">Begin with Chapter One</p>
+        <h2 class="sample-headline" id="sample-heading">Begin with Chapter One.</h2>
+        <p class="sample-sub">Enter your email to receive Chapter One of <em>Recursive Prophet</em>, along with an invitation to the Archive—the first artifact from the world surrounding the novel.</p>
+        <CaptureForm idPrefix="chapter-one" label="Your email address" />
       </div>
     </div>
   </div>
 </section>
-
-<style>
-  .capture-form { margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.9rem; }
-  .capture-field { display: flex; flex-direction: column; gap: 0.4rem; }
-  .capture-field label {
-    font-family: var(--mono);
-    font-size: 0.7rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--muted);
-  }
-  .capture-field input {
-    min-height: 3.25rem;
-    font-family: var(--body);
-    font-size: 1rem;
-    padding: 0.75rem 0.9rem;
-    color: var(--ink);
-    background: var(--white);
-    border: 1px solid var(--rule-strong);
-    border-radius: 0;
-  }
-  .capture-field input:focus-visible { border-color: var(--signal); }
-  .capture-form button { align-self: flex-start; cursor: pointer; border: 0; min-height: 3rem; }
-  .capture-note,
-  .capture-consent {
-    font-family: var(--mono);
-    font-size: 0.66rem;
-    letter-spacing: 0.035em;
-    line-height: 1.65;
-    color: var(--muted);
-    margin: 0;
-  }
-  .capture-consent a { color: var(--signal); text-underline-offset: 0.18em; }
-  .capture-honeypot {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-</style>

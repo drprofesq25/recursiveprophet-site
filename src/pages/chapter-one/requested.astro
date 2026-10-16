@@ -1,0 +1,14 @@
+---
+import InteriorPage from '../../components/InteriorPage.astro';
+---
+<InteriorPage
+  eyebrow="Confirmation requested"
+  title="One more step."
+  description="Confirm your email address to receive Chapter One and an invitation to the Archive."
+  noIndex
+  actions={[{ label: 'Return to the Book', href: '/#book', style: 'primary' }]}
+>
+  <p>Check your inbox and confirm your address. Chapter One and an invitation to the Archive will arrive after you confirm.</p>
+  <p>If the message does not appear within a few minutes, check Promotions, Updates, or Spam—the minor digital underworlds where important things are routinely misplaced.</p>
+  <p>If this address is already confirmed, you’re inside. Otherwise, check your inbox for the confirmation message.</p>
+</InteriorPage>

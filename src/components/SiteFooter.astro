@@ -1,10 +1,16 @@
 ---
-import { FOOTER_LINKS, SITE } from '../consts';
-const year = new Date().getFullYear();
+import { FOOTER_LINKS } from '../consts';
 ---
 <footer>
-  <span>© {year} Christopher Everson · {SITE.titleShort}</span>
-  <nav aria-label="Footer">
-    {FOOTER_LINKS.map((l) => <a href={l.href}>{l.label}</a>)}
-  </nav>
+  <div class="footer-brand">
+    <strong>Recursive Prophet</strong>
+    <span>An intimate speculative novel by Chris Everson.</span>
+    <span>© 2026 Chris Everson. Published by The Bindery.</span>
+  </div>
+  <div class="footer-actions">
+    <nav aria-label="Footer">
+      {FOOTER_LINKS.map((l) => <a href={l.href}>{l.label}</a>)}
+    </nav>
+    <a href="/#sample" class="footer-cta">Read Chapter One</a>
+  </div>
 </footer>
