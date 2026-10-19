@@ -11,16 +11,14 @@ export const SITE = {
   url: 'https://recursiveprophet.com',
   authors: 'Chris Everson',
   locale: 'en_US',
+  // TKTK: replace the portrait working cover with a dedicated final 2:1 social-share card.
   ogImage: '/cover/rp-cover-600.jpg',
   ogImageAlt: 'Recursive Prophet book cover',
+  ogImageType: 'image/jpeg',
+  ogImageWidth: 600,
+  ogImageHeight: 900,
   themeColor: '#171412',
 } as const;
-
-/** Retailer links are non-blocking for the capture-first release and remain absent until verified. */
-export const BUY_LINKS: ReadonlyArray<{ format: string; note: string; url: string }> = [];
-
-/** True once at least one real retailer link exists. Gates the Buy section's copy. */
-export const BUY_LIVE = false;
 
 /**
  * Site-side contract for BQ-262. The server fixes source and consent version;

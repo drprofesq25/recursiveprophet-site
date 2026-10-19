@@ -6,6 +6,9 @@ import sitemap from '@astrojs/sitemap';
 export default defineConfig({
   site: 'https://recursiveprophet.com',
   trailingSlash: 'ignore',
+  server: {
+    allowedHosts: ['terminal.local'],
+  },
   redirects: {
     '/first-file/requested': '/chapter-one/requested',
     '/first-file/problem': '/chapter-one/problem',
@@ -20,6 +23,7 @@ export default defineConfig({
           '/chapter-one/requested/',
           '/chapter-one/problem/',
           '/chapter-one/confirmed/',
+          '/404/',
         ].includes(path);
       },
     }),

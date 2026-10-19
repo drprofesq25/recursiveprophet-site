@@ -59,9 +59,12 @@ screenshot.
 
 - Title, description, canonical, Open Graph, Twitter card, favicon, sitemap, and indexing intent
   match the approved public state.
+- The social-share image matches the declared large-card aspect ratio and has been inspected in
+  current platform preview tools.
 - One clear H1; subsequent headings form a useful outline.
 - Structured data is added only from verified book metadata.
 - Social previews are inspected with the actual production asset.
+- `robots.txt`, the sitemap, and the custom 404 page agree with the intended indexing state.
 
 ## Verification
 

@@ -10,8 +10,27 @@ import Faq from '../components/Faq.astro';
 import FinalCta from '../components/FinalCta.astro';
 import AboutChris from '../components/AboutChris.astro';
 import SiteFooter from '../components/SiteFooter.astro';
+import { SITE } from '../consts';
+
+const bookStructuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'Book',
+  name: SITE.titleShort,
+  description: SITE.description,
+  url: SITE.url,
+  image: new URL(SITE.ogImage, SITE.url).href,
+  inLanguage: 'en',
+  author: {
+    '@type': 'Person',
+    name: SITE.authors,
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: 'The Bindery',
+  },
+};
 ---
-<BaseLayout>
+<BaseLayout structuredData={bookStructuredData}>
   <SiteHeader slot="header" />
   <Hero />
   <WhatThisIs />

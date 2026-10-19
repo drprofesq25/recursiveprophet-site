@@ -51,7 +51,14 @@ const server = createServer((req, res) => {
   const file = join(DIST, p);
   if (!file.startsWith(DIST)) { res.writeHead(403).end(); return; }
   readFile(file, (err, buf) => {
-    if (err) { res.writeHead(404).end('not found'); return; }
+    if (err) {
+      readFile(join(DIST, '404.html'), (notFoundErr, notFoundBuf) => {
+        if (notFoundErr) { res.writeHead(404).end('not found'); return; }
+        res.writeHead(404, { 'content-type': 'text/html' });
+        res.end(notFoundBuf);
+      });
+      return;
+    }
     res.writeHead(200, { 'content-type': MIME[extname(file)] ?? 'application/octet-stream' });
     res.end(buf);
   });
@@ -225,6 +232,13 @@ const homeContract = await homePage.evaluate(() => {
     description: document.querySelector('meta[name="description"]')?.getAttribute('content') ?? '',
     ogTitle: document.querySelector('meta[property="og:title"]')?.getAttribute('content') ?? '',
     ogDescription: document.querySelector('meta[property="og:description"]')?.getAttribute('content') ?? '',
+    structuredData: (() => {
+      try {
+        return JSON.parse(document.querySelector('script[type="application/ld+json"]')?.textContent ?? 'null');
+      } catch {
+        return null;
+      }
+    })(),
     formCount: forms.length,
     formsValid: forms.every((form) => {
       const consent = form.querySelector('.capture-consent');
@@ -253,6 +267,10 @@ const homeChecks = {
   metaDescription: homeContract.description === 'A restless creator builds a Network of AI assistants to become his most complete self. The system works, but the line between assistance and authorship blurs.',
   socialTitle: homeContract.ogTitle === 'He Built the Network. It Began Shaping Him in Return.',
   socialDescription: homeContract.ogDescription === 'An intimate speculative novel about personal identity, creative ownership, and what remains ours when the tools that expand our lives begin shaping them.',
+  bookStructuredData: homeContract.structuredData?.['@type'] === 'Book' &&
+    homeContract.structuredData?.name === 'Recursive Prophet' &&
+    homeContract.structuredData?.author?.name === 'Chris Everson' &&
+    homeContract.structuredData?.publisher?.name === 'The Bindery',
   twoCaptureForms: homeContract.formCount === 2,
   captureFormsMatchMaster: homeContract.formsValid,
   sectionBridgesTargetForm: homeContract.allBridgesTargetForm,
@@ -341,6 +359,47 @@ for (const [legacyPath, targetPath] of legacyRedirects) {
   console.log(`  ${redirects ? 'PASS' : 'FAIL'} ${legacyPath} redirectsTo ${targetPath}`);
 }
 await routeCtx.close();
+
+// --- missing-page and crawler contracts ---
+const missingCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+const missingPage = await missingCtx.newPage();
+const missingResponse = await missingPage.goto(new URL('/this-page-does-not-exist/', URL_).href, { waitUntil: 'load' });
+const missingState = await missingPage.evaluate(() => {
+  const action = document.querySelector('main .interior-actions a');
+  return {
+    robots: document.querySelector('meta[name="robots"]')?.getAttribute('content') ?? '',
+    heading: document.querySelector('main h1')?.textContent?.trim() ?? '',
+    text: document.querySelector('main .interior-copy')?.textContent?.replace(/\s+/g, ' ').trim() ?? '',
+    actionText: action?.textContent?.trim() ?? '',
+    actionHref: action?.getAttribute('href') ?? '',
+  };
+});
+const missingChecks = {
+  status: missingResponse?.status() === 404,
+  noIndex: missingState.robots.split(',').map((value) => value.trim()).includes('noindex'),
+  heading: missingState.heading === 'This page has gone missing.',
+  approvedCopy: missingState.text === 'The Network remembers many things. Apparently, this was not one of them.',
+  actionText: missingState.actionText === 'Return to the Book',
+  actionHref: missingState.actionHref === '/#book',
+};
+console.log('\n=== missing-page contract ===');
+for (const [name, passed] of Object.entries(missingChecks)) {
+  if (!passed) contractFailures++;
+  console.log(`  ${passed ? 'PASS' : 'FAIL'} ${name}`);
+}
+await missingCtx.close();
+
+const robots = readFileSync(join(DIST, 'robots.txt'), 'utf8');
+const robotsChecks = {
+  allowsCrawling: /^Allow:\s*\/$/m.test(robots),
+  namesCanonicalSitemap: robots.includes('Sitemap: https://recursiveprophet.com/sitemap-index.xml'),
+  missingPageExcludedFromSitemap: !sitemap.includes('/404/'),
+};
+console.log('\n=== crawler contract ===');
+for (const [name, passed] of Object.entries(robotsChecks)) {
+  if (!passed) contractFailures++;
+  console.log(`  ${passed ? 'PASS' : 'FAIL'} ${name}`);
+}
 
 // --- privacy notice: approved scope, visible consent version, and review screenshot ---
 const privacyCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });

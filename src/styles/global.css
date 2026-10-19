@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Libre+Baskerville:wght@400;700&display=optional');
-
 *,
 *::before,
 *::after {
@@ -191,7 +189,6 @@ a {
 
 .hero-annotation,
 .section-tag,
-.archive-eyebrow,
 .interior-eyebrow {
   font-family: var(--mono);
   font-size: 0.69rem;
@@ -577,9 +574,7 @@ h2 {
 }
 
 .what-list,
-.archive-items,
-.readers-list,
-.buy-list {
+.readers-list {
   list-style: none;
 }
 
@@ -781,107 +776,6 @@ hr.section-rule {
   width: 0.5rem;
   height: 1px;
   background: var(--amber);
-}
-
-/* Archive */
-.archive-band {
-  position: relative;
-  overflow: hidden;
-  border-block: 1px solid rgba(73, 57, 183, 0.18);
-  background:
-    radial-gradient(circle at 85% 30%, rgba(73, 57, 183, 0.12), transparent 28rem),
-    var(--paper-cool);
-}
-
-.archive-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(15rem, 0.65fr);
-  align-items: center;
-  gap: clamp(3rem, 10vw, 8rem);
-}
-
-.archive-eyebrow {
-  margin-bottom: 1.2rem;
-  color: var(--signal);
-}
-
-.archive-headline {
-  max-width: 12ch;
-  margin-bottom: 1.4rem;
-  color: var(--ink);
-  font-size: clamp(3rem, 6vw, 5.5rem);
-}
-
-.archive-desc {
-  max-width: 55ch;
-  margin-bottom: 2rem;
-  color: var(--muted);
-  line-height: 1.82;
-}
-
-.archive-items {
-  max-width: 42rem;
-  margin-bottom: 2.3rem;
-}
-
-.archive-items li {
-  display: flex;
-  align-items: baseline;
-  gap: 1rem;
-  padding: 0.9rem 0;
-  border-bottom: 1px solid var(--rule);
-  color: var(--text);
-  font-family: var(--mono);
-  font-size: 0.72rem;
-  letter-spacing: 0.025em;
-  line-height: 1.6;
-}
-
-.archive-items li:first-child {
-  border-top: 1px solid var(--rule);
-}
-
-.file-icon {
-  color: var(--signal);
-  font-size: 0.62rem;
-  font-weight: 700;
-}
-
-.archive-cta-col {
-  display: grid;
-  justify-items: center;
-  text-align: center;
-}
-
-.archive-badge {
-  display: grid;
-  width: 12rem;
-  aspect-ratio: 1;
-  place-content: center;
-  justify-items: center;
-  gap: 0.15rem;
-  margin-bottom: 1.5rem;
-  border: 1px solid rgba(73, 57, 183, 0.42);
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.28);
-}
-
-.archive-badge-label,
-.archive-badge-sub,
-.archive-status {
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.075em;
-  line-height: 1.75;
-  text-transform: uppercase;
-}
-
-.archive-badge-number {
-  color: var(--signal);
-  font-family: var(--display);
-  font-size: 4.3rem;
-  line-height: 0.95;
 }
 
 /* FAQ */
@@ -1204,7 +1098,6 @@ footer a {
   .what-grid,
   .synopsis-wrapper,
   .readers-grid,
-  .archive-grid,
   .faq-grid {
     grid-template-columns: 1fr;
     gap: 2.75rem;
@@ -1221,11 +1114,6 @@ footer a {
   .pull-quote-col {
     position: static;
     margin-top: 0;
-  }
-
-  .archive-cta-col {
-    justify-items: start;
-    text-align: left;
   }
 
   .site-nav a:not(.nav-cta) {
@@ -1294,7 +1182,6 @@ footer a {
   }
 
   .sample-headline,
-  .archive-headline,
   .final-headline {
     font-size: clamp(2.8rem, 15vw, 4.25rem);
   }
@@ -1303,10 +1190,6 @@ footer a {
   .author-copy h2,
   .what-headline {
     font-size: clamp(2.6rem, 13vw, 3.75rem);
-  }
-
-  .archive-badge {
-    width: 10rem;
   }
 
   footer {
