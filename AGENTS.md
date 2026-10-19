@@ -14,11 +14,31 @@ covers **this site only**. Identity, session protocol, and Network-wide rules st
   `references/risk-and-approval-matrix.md` (what needs approval before you touch it).
 - **Marketing routing summary:** `network/.agents/product-marketing.md`. Verify launch-sensitive
   decisions in the current Notion publishing plan rather than treating a repo summary as live canon.
+- **Approved public copy:** [Book 1 Master Public Copy System](https://app.notion.com/p/3436663003ed8122be7dda6a782f3feb),
+  especially Sections 5, 5.13, 6.7, and 7. It is the sole authority for approved public-facing
+  copy, consent language, privacy language, and metadata. Fetch it fresh before copy-sensitive
+  work; do not reconstruct current copy from older repository text or the Website reference page.
 - **Site contracts:** `docs/WEB_PUBLISHING_CONTRACT.md`, `docs/REDESIGN_ACCEPTANCE.md`, and
   `docs/ANALYTICS_SPEC.md`.
 
 This file records site mechanics. It does not establish identity canon, and it does not override the
 canonical brief — where they disagree, the `network` repo wins.
+
+## Authority and coordination
+
+Use this chain to establish current truth without turning this file into another volatile record:
+
+1. The [Book 1 Master Public Copy System](https://app.notion.com/p/3436663003ed8122be7dda6a782f3feb)
+   holds approved public copy and the decisions in its relevant implementation sections.
+2. [BQ-270](https://app.notion.com/p/3b06663003ed8195a458e5680a439ef4) holds current
+   implementation status, ownership, blockers, and approvals.
+3. `docs/handoffs/BQ-270.md` holds the current technical handoff and test evidence.
+4. Repository code, tests, commits, and pull requests provide implementation evidence. The current
+   implementation review is [draft PR #6](https://github.com/drprofesq25/recursiveprophet-site/pull/6).
+5. Conversation history is supporting context, not a durable source of truth.
+
+Keep full approved copy and volatile blocker lists in their authoritative records above; link to
+them instead of duplicating them here.
 
 ## Who works here
 
@@ -36,10 +56,11 @@ canonical brief — where they disagree, the `network` repo wins.
 
 - **Astro, static output.** Deliberately host-agnostic: no host adapter is committed until the
   deploy target is chosen, so the build runs identically anywhere.
+- **Build runtime:** the eventual build host should use Node.js 22.19 or newer.
 - Zero required runtime JS beyond small progressive-enhancement scripts. If a feature needs a
   framework component, justify it before adding one.
-- Source of truth for the original design is the single-file draft `RPSite_redesign3.html`, kept for
-  reference only — it is not the build input once components exist.
+- `RPSite_redesign3.html` is a historical design reference only. It is not the current source of
+  truth for copy or implementation; the Astro source, tests, and authoritative records above are.
 
 ## Commands
 
@@ -49,17 +70,21 @@ npm run dev                 # local dev server
 npm run build               # static build to dist/ (ungated -- placeholders allowed)
 npm run build:prod          # placeholder gate + build; THIS is what deploys
 npm run preview             # serve the built output
+npm run check               # Astro and TypeScript diagnostics
 npm run check:placeholders  # fails if any TKTK marker remains
 npm run audit               # axe-core + render audit of the built site
+npm run audit -- --strict   # strict accessibility, responsive, copy, and route contract gate
 ```
 
 Production deploys must run `build:prod`, never bare `build`. The bare form exists so local and
-preview work is not blocked by in-progress placeholders.
+preview work is not blocked by in-progress placeholders. `build:prod` must remain blocked while
+any production placeholder exists.
 
 ## Branch and PR discipline
 
-- Never commit directly to `main`. Branch as `work/<queue-id>` matching the Workshop_Build_Queue
-  Build ID (e.g. `work/BQ-257`), same convention as the `network` repo.
+- Never commit directly to `main`. Branch as `work/<queue-id>[-<scoped-suffix>]`, always retaining
+  the Workshop_Build_Queue Build ID (for example, `work/BQ-257` or
+  `work/BQ-270-copy-reconciliation`), following the same convention as the `network` repo.
 - Run the sync gate before editing: `git status --short --branch` → `git fetch --prune` →
   `git pull --ff-only origin main`.
 - **Commit from a surface with hands** (desktop or droplet), never from a Cowork sandbox mount — the
@@ -76,18 +101,18 @@ Apply `patch-webmaster/references/risk-and-approval-matrix.md`. In this repo spe
 - **R3** — DNS, registrar, SSL/CDN, credentials, commerce, subscriber data, legal/privacy copy.
   **Always requires target-specific approval.** Never bundle several R3 actions under one approval.
 
-Note the live DNS situation: `recursiveprophet.com` currently has **no apex A record**, while
-`n8n.recursiveprophet.com` resolves to the droplet. Any apex or `www` record is an R3 action and must
-not disturb the existing subdomain.
+Verify live DNS immediately before making any DNS or deployment recommendation. Every DNS action
+requires exact R3 approval, and no site change may disturb unrelated `n8n.recursiveprophet.com`
+records.
 
 ## Design constraints
 
 `docs/DESIGN_CONSTRAINTS.md` records what the built site currently achieves and what it currently
 fails, all measured with `npm run audit`. Read it before a redesign: it lists the behaviours that
 must not regress (zero CLS, no mobile overflow, keyboard-operable FAQ disclosures, responsive cover
-negotiation, the request/weight budget) and the open WCAG AA contrast failures in the muted palette,
-with the exact ratios to clear. `docs/REDESIGN_ACCEPTANCE.md` defines the measurable release
-acceptance contract for the redesign; it does not itself approve deployment.
+negotiation, the request/weight budget) and the historical muted-palette WCAG AA contrast failures,
+with the exact ratios that must not be reintroduced. `docs/REDESIGN_ACCEPTANCE.md` defines the
+measurable release acceptance contract for the redesign; it does not itself approve deployment.
 
 ## Content and voice constraints
 
