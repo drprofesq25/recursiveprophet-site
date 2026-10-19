@@ -24,12 +24,14 @@ screenshot.
 - The FAQ retains native `<details>/<summary>` behavior or reproduces its semantics, focus,
   `aria-expanded`, and one-open-at-a-time behavior.
 - Motion honors `prefers-reduced-motion` without hiding information.
-- Zoom and text resizing do not clip actions or content.
+- The page reflows at 320 CSS pixels without clipping actions or content.
+- Invalid form states are both visible and programmatically exposed, then clear when corrected.
 
 ## Responsive behavior
 
-- No horizontal overflow at 390px.
+- No horizontal overflow at 390px or the 320 CSS-pixel reflow viewport.
 - Primary actions remain visible and usable at narrow and wide viewports.
+- On mobile, Chapter One anchors land on the capture offer and form before optional preview material.
 - Reading order remains meaningful when columns collapse.
 - Display type, cover art, forms, and navigation do not collide or truncate.
 - Touch targets and spacing support coarse pointers.
@@ -70,8 +72,10 @@ screenshot.
 
 ```bash
 npm ci
+npm run check
 npm run build
-npm run audit
+npm run audit -- --strict
+npm audit --omit=dev
 npm run check:placeholders
 ```
 
@@ -79,7 +83,6 @@ Before production:
 
 ```bash
 npm run build:prod
-npm run audit -- --strict
 ```
 
 Capture desktop and mobile screenshots in the same review round. Record deviations from the

@@ -5,8 +5,8 @@
  *   npm run audit            report only, always exits 0
  *   npm run audit -- --strict  exit 1 on any serious/critical violation (for CI)
  *
- * Serves ./dist itself, runs axe-core at desktop and mobile widths, checks the FAQ,
- * capture forms, approved metadata/copy, and transaction-route contracts, reports
+ * Serves ./dist itself, runs axe-core at desktop, mobile, and 320px reflow widths,
+ * checks reduced motion, the FAQ, capture forms, approved metadata/copy, and route contracts, reports
  * which cover rendition the browser negotiated, and writes full-page screenshots
  * to .audit/ (gitignored).
  *
@@ -94,6 +94,7 @@ try {
 const VIEWPORTS = [
   { label: 'desktop', width: 1440, height: 900 },
   { label: 'mobile',  width: 390,  height: 844 },
+  { label: 'reflow',  width: 320,  height: 800 },
 ];
 
 const serious = new Set();   // distinct violation ids, not per-viewport repeats
@@ -164,6 +165,58 @@ if (seen.size) {
   for (const [k, g] of [...seen.entries()].sort((a, b) => a[1].ratio - b[1].ratio))
     console.log(`  ${k}  ratio ${g.ratio} needs ${g.need}  (${g.count} node hit(s))`);
 }
+
+// --- reduced-motion contract: no decorative loop and no smooth scrolling ---
+const reducedCtx = await browser.newContext({
+  viewport: { width: 390, height: 844 },
+  reducedMotion: 'reduce',
+});
+const reducedPage = await reducedCtx.newPage();
+await reducedPage.goto(URL_, { waitUntil: 'load' });
+const reducedState = await reducedPage.evaluate(() => {
+  const signal = document.querySelector('.signal-line');
+  return {
+    scrollBehavior: getComputedStyle(document.documentElement).scrollBehavior,
+    signalAnimation: signal ? getComputedStyle(signal).animationName : '',
+  };
+});
+const reducedChecks = {
+  smoothScrollDisabled: reducedState.scrollBehavior === 'auto',
+  decorativeLoopDisabled: reducedState.signalAnimation === 'none',
+};
+console.log('\n=== reduced motion ===');
+for (const [name, passed] of Object.entries(reducedChecks)) {
+  if (!passed) contractFailures++;
+  console.log(`  ${passed ? 'PASS' : 'FAIL'} ${name}`);
+}
+
+await reducedPage.locator('a.nav-cta').click();
+const mobilePathState = await reducedPage.evaluate(() => {
+  const section = document.querySelector('#sample');
+  const header = document.querySelector('.site-header');
+  const navCta = document.querySelector('.site-nav .nav-cta');
+  const capture = document.querySelector('#sample .sample-cta-col');
+  const preview = document.querySelector('#sample .chapter-preview');
+  return {
+    sectionTop: Math.round(section?.getBoundingClientRect().top ?? -1),
+    headerHeight: Math.round(header?.getBoundingClientRect().height ?? -1),
+    captureTop: Math.round(capture?.getBoundingClientRect().top ?? -1),
+    previewTop: Math.round(preview?.getBoundingClientRect().top ?? -1),
+    navCtaColor: navCta ? getComputedStyle(navCta).color : '',
+  };
+});
+const mobilePathChecks = {
+  capturePrecedesPreview: mobilePathState.captureTop < mobilePathState.previewTop,
+  anchorClearsHeaderOnce: mobilePathState.sectionTop >= mobilePathState.headerHeight &&
+    mobilePathState.sectionTop <= mobilePathState.headerHeight + 20,
+  navCtaTextRemainsInk: mobilePathState.navCtaColor === 'rgb(23, 20, 18)',
+};
+console.log('\n=== mobile capture path ===');
+for (const [name, passed] of Object.entries(mobilePathChecks)) {
+  if (!passed) contractFailures++;
+  console.log(`  ${passed ? 'PASS' : 'FAIL'} ${name}`);
+}
+await reducedCtx.close();
 
 // --- deterministic asset inventory (filesystem, not the network) ---
 import { readdirSync, statSync } from 'node:fs';
@@ -278,6 +331,25 @@ const homeChecks = {
   staleDateRemoved: !homeContract.hasStaleDate,
   unverifiedExcerptRemoved: !homeContract.hasOldUnverifiedExcerpt,
 };
+
+const firstForm = homePage.locator('form[data-capture-form]').first();
+const firstEmail = firstForm.locator('input[type="email"]');
+await firstEmail.fill('not-an-email');
+await firstForm.locator('button[type="submit"]').click();
+const invalidState = await firstForm.evaluate((form) => ({
+  message: form.querySelector('[data-form-status]')?.textContent?.trim() ?? '',
+  ariaInvalid: form.querySelector('input[type="email"]')?.getAttribute('aria-invalid') ?? '',
+}));
+homeChecks.invalidFeedback = invalidState.message ===
+  'That address does not appear to be complete. Give it another look.' &&
+  invalidState.ariaInvalid === 'true';
+
+await firstEmail.fill('reader@example.com');
+const recoveredState = await firstForm.evaluate((form) => ({
+  message: form.querySelector('[data-form-status]')?.textContent?.trim() ?? '',
+  ariaInvalid: form.querySelector('input[type="email"]')?.hasAttribute('aria-invalid') ?? true,
+}));
+homeChecks.invalidFeedbackClears = recoveredState.message === '' && !recoveredState.ariaInvalid;
 
 console.log('\n=== approved home-page contract ===');
 for (const [name, passed] of Object.entries(homeChecks)) {
@@ -441,7 +513,7 @@ if (total) {
   const parts = [];
   if (serious.size) parts.push(`${serious.size} serious/critical a11y rule(s): ${[...serious].join(', ')}`);
   if (kbFailures) parts.push(`${kbFailures} keyboard check(s) failing`);
-  if (contractFailures) parts.push(`${contractFailures} transactional route contract check(s) failing`);
+  if (contractFailures) parts.push(`${contractFailures} contract check(s) failing`);
   console.log(`\n${parts.join('  |  ')}`);
   if (STRICT) { console.error('STRICT mode: failing.'); process.exit(1); }
   console.log('Reported, not gating. Use --strict to gate in CI.');

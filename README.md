@@ -46,3 +46,6 @@ The release gate scans shippable source (`src/` and `public/`). The following va
 Retailer links are deliberately absent and non-blocking while the site remains capture-first.
 Hosting, deployment, DNS, live automation, and subscriber-data actions remain separate R2/R3 work
 requiring exact approval; unrelated `n8n.recursiveprophet.com` records must not be disturbed.
+
+See [`docs/LAUNCH_READINESS_2026-10-19.md`](docs/LAUNCH_READINESS_2026-10-19.md) for the exact
+hosting-day decisions and end-to-end release checklist.

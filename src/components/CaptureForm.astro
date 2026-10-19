@@ -72,11 +72,13 @@ const statusId = `${idPrefix}-status`;
   for (const form of document.querySelectorAll<HTMLFormElement>('[data-capture-form]')) {
     const status = form.querySelector<HTMLElement>('[data-form-status]');
     const button = form.querySelector<HTMLButtonElement>('[data-submit-button]');
+    const email = form.querySelector<HTMLInputElement>('input[type="email"]');
 
     form.addEventListener(
       'invalid',
-      () => {
+      (event) => {
         if (status) status.textContent = invalidMessage;
+        if (email && event.target === email) email.setAttribute('aria-invalid', 'true');
       },
       true,
     );
@@ -84,6 +86,7 @@ const statusId = `${idPrefix}-status`;
     form.addEventListener('input', () => {
       if (status) status.textContent = '';
       if (button) button.textContent = button.dataset.defaultLabel ?? 'Send Me Chapter One';
+      email?.removeAttribute('aria-invalid');
     });
 
     form.addEventListener('submit', () => {
@@ -132,8 +135,8 @@ const statusId = `${idPrefix}-status`;
   .capture-privacy,
   .capture-status {
     font-family: var(--mono);
-    font-size: 0.66rem;
-    letter-spacing: 0.035em;
+    font-size: 0.75rem;
+    letter-spacing: 0.025em;
     line-height: 1.65;
     color: var(--muted);
     margin: 0;

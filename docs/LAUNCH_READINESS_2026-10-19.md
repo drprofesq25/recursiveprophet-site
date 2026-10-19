@@ -33,6 +33,12 @@ stage the mythic, optimize for the owned audience.
 - Removed unrendered Archive/Buy components that retained retired or unverified copy.
 - Extended the strict audit contract to cover the Book schema, 404 behavior, `robots.txt`, and
   sitemap exclusion.
+- Extended release QA to the 320 CSS-pixel reflow viewport, reduced motion, invalid-form recovery,
+  and the stateful mobile capture path.
+- Put the Chapter One offer and form before the optional preview card on narrow screens, removed a
+  doubled anchor offset, and preserved the header CTA's contrast after navigation.
+- Increased the frozen consent/helper copy and footer text to a more readable size without changing
+  the approved language.
 - Added an explicit production gate for a final wide social-share card. The present portrait cover
   is not the correct production asset for a `summary_large_image` card.
 
