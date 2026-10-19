@@ -26,9 +26,10 @@ regressing the behaviors below.
 - **Six FAQ disclosures pass all four keyboard checks** using native `<details name="faq">`.
 - **Responsive cover negotiation remains correct:** `rp-cover-450.webp` at 350px desktop and
   `rp-cover-300.webp` at 215px mobile.
-- **230 DOM nodes** on the home page and a deterministic build weight of **419 KB in `dist/`**:
-  213 KB JPG, 142 KB WebP, 47 KB HTML, 17 KB CSS, and 1 KB across XML, SVG, and text. A visitor
-  receives one cover rendition rather than all six.
+- **230 DOM nodes** on the home page and a deterministic build weight of **801 KB in `dist/`**:
+  495 KB JPG, 240 KB WebP, 48 KB HTML, 17 KB CSS, and 1 KB across XML, SVG, and text. A site
+  visitor receives one cover rendition rather than all six; the separate 252 KB social card is
+  fetched by link-preview crawlers, not by the rendered page.
 - The static build produces six authored pages: `/`, `/privacy/`, `/404.html`, and the requested,
   problem, and confirmed states under `/chapter-one/`. It also produces two legacy `/first-file/`
   redirects.
@@ -38,7 +39,7 @@ regressing the behaviors below.
   audit asserts those contracts plus the approved metadata, Book structured data, crawler files,
   signup copy, consent, and privacy-notice surface.
 
-The browser reported 8 requests and 192 KB fetched on desktop, and 8 requests and 169 KB at both
+The browser reported 8 requests and 226 KB fetched on desktop, and 8 requests and 186 KB at both
 390px and 320px. As before, use the deterministic `dist/` inventory—not browser request totals—as
 the weight budget.
 

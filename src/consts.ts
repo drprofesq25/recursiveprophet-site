@@ -11,12 +11,12 @@ export const SITE = {
   url: 'https://recursiveprophet.com',
   authors: 'Chris Everson',
   locale: 'en_US',
-  // TKTK: replace the portrait working cover with a dedicated final 2:1 social-share card.
-  ogImage: '/cover/rp-cover-600.jpg',
-  ogImageAlt: 'Recursive Prophet book cover',
+  // TKTK: replace this draft-10 review asset with the final approved 1200x630 social card.
+  ogImage: '/social/rp-social-card-1200x630.jpg',
+  ogImageAlt: 'Recursive Prophet title over an amber Network constellation on deep blue',
   ogImageType: 'image/jpeg',
-  ogImageWidth: 600,
-  ogImageHeight: 900,
+  ogImageWidth: 1200,
+  ogImageHeight: 630,
   themeColor: '#171412',
 } as const;
 

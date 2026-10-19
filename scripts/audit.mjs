@@ -285,6 +285,11 @@ const homeContract = await homePage.evaluate(() => {
     description: document.querySelector('meta[name="description"]')?.getAttribute('content') ?? '',
     ogTitle: document.querySelector('meta[property="og:title"]')?.getAttribute('content') ?? '',
     ogDescription: document.querySelector('meta[property="og:description"]')?.getAttribute('content') ?? '',
+    ogImage: document.querySelector('meta[property="og:image"]')?.getAttribute('content') ?? '',
+    ogImageWidth: document.querySelector('meta[property="og:image:width"]')?.getAttribute('content') ?? '',
+    ogImageHeight: document.querySelector('meta[property="og:image:height"]')?.getAttribute('content') ?? '',
+    twitterCard: document.querySelector('meta[name="twitter:card"]')?.getAttribute('content') ?? '',
+    twitterImage: document.querySelector('meta[name="twitter:image"]')?.getAttribute('content') ?? '',
     structuredData: (() => {
       try {
         return JSON.parse(document.querySelector('script[type="application/ld+json"]')?.textContent ?? 'null');
@@ -315,11 +320,25 @@ const homeContract = await homePage.evaluate(() => {
   };
 });
 
+const socialCardAsset = await homePage.evaluate(async () => {
+  const src = document.querySelector('meta[property="og:image"]')?.getAttribute('content');
+  if (!src) return null;
+  const image = new Image();
+  image.src = new URL(new URL(src).pathname, window.location.origin).href;
+  await image.decode();
+  return { width: image.naturalWidth, height: image.naturalHeight };
+});
+
 const homeChecks = {
   pageTitle: homeContract.title === 'Recursive Prophet — A Speculative Novel by Chris Everson',
   metaDescription: homeContract.description === 'A restless creator builds a Network of AI assistants to become his most complete self. The system works, but the line between assistance and authorship blurs.',
   socialTitle: homeContract.ogTitle === 'He Built the Network. It Began Shaping Him in Return.',
   socialDescription: homeContract.ogDescription === 'An intimate speculative novel about personal identity, creative ownership, and what remains ours when the tools that expand our lives begin shaping them.',
+  socialCardPath: homeContract.ogImage.endsWith('/social/rp-social-card-1200x630.jpg'),
+  socialCardDimensions: homeContract.ogImageWidth === '1200' && homeContract.ogImageHeight === '630',
+  socialCardAssetDimensions: socialCardAsset?.width === 1200 && socialCardAsset?.height === 630,
+  socialCardSharedAcrossMetadata: homeContract.twitterCard === 'summary_large_image' &&
+    homeContract.twitterImage === homeContract.ogImage,
   bookStructuredData: homeContract.structuredData?.['@type'] === 'Book' &&
     homeContract.structuredData?.name === 'Recursive Prophet' &&
     homeContract.structuredData?.author?.name === 'Chris Everson' &&

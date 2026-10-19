@@ -112,6 +112,17 @@ remain explicit production-gated placeholders pending Prof's inputs. The capture
 deployment, DNS, MailerLite, subscriber state, and automation remain outside this repository change
 and require separate target-specific approval.
 
+The capture dependency is the existing n8n workflow **RP Capture Relay**, workflow ID
+`u222lgkG7TvPOceI`. Its presence does not make it launch-ready. Forge must replace the retired v1
+consent and First File configuration with consent version `rp-email-consent-2026-10-16-v2`, the
+current `/chapter-one/` requested/problem/confirmed routes, and the approved delivery sequence.
+The site action stays `TKTK` until that workflow is activated, tested end to end, and Forge supplies
+the exact production HTTPS webhook URL. Do not infer a URL from the workflow name or ID.
+
+The footer Contact destination also remains gated. The intended launch implementation is a
+`mailto:` link using a dedicated Recursive Prophet address, most likely
+`hello@recursiveprophet.com`; do not publish that address until it is confirmed active.
+
 Response routes now live under `/chapter-one/`: requested, problem, and confirmed. They are
 `noindex` and excluded from the sitemap. The former `/first-file/` response paths are redirects only.
 

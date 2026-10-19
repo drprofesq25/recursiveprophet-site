@@ -61,8 +61,8 @@ screenshot.
 
 - Title, description, canonical, Open Graph, Twitter card, favicon, sitemap, and indexing intent
   match the approved public state.
-- The social-share image matches the declared large-card aspect ratio and has been inspected in
-  current platform preview tools.
+- The social-share image is a dedicated 1200×630 (1.91:1) landscape composition, not a stretched
+  portrait cover, and has been inspected in current platform preview tools.
 - One clear H1; subsequent headings form a useful outline.
 - Structured data is added only from verified book metadata.
 - Social previews are inspected with the actual production asset.
