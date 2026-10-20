@@ -5,7 +5,9 @@
 - **Base reviewed:** `work/BQ-270-copy-reconciliation` @ `6880fed` (draft PR #6). Built locally,
   then screenshotted at 1440×900 and 390×844, on a first (uncached) visit and on a reload.
   `npm run audit -- --strict` passes.
-- **Revision:** rev 3.2, 2026-10-20 10:40 EDT. Byline rules decided and written into the Master (C1).
+- **Revision:** rev 3.3, 2026-10-20 11:00 EDT. Reader-facing genre wording and the provisional
+  hero supporting line were revised in Master revision 2 (C2). Rev 3.2 decided the byline rules
+  and wrote them into the Master (C1).
   Rev 3.1 recorded the supplied portrait.
   Rev 3 was 2026-10-20 10:20 EDT. Rev 2 added the prototype and research
   additions. Rev 3 records Prof's palette decision and adds section S (further suggestions,
@@ -24,9 +26,9 @@
 - **Copy changes are a separate track.** They are workshopped with Forge, approved by Prof and
   written into the Master Public Copy System before Codex touches any words (see "Copy
   track" below). Codex still changes no text unless the Master changes first.
-- **Status:** design direction and work order only. **No copy changes.** Every word on the site
-  stays exactly as the Book 1 Master Public Copy System has it (approved 2026-10-16). Where an item
-  below touches wording, it is listed under Owner inputs and is not part of this work.
+- **Status:** design direction and work order. **No unapproved copy changes.** Every word on the
+  site stays exactly as the Book 1 Master Public Copy System has it. C1 and C2 are the approved
+  exceptions recorded in the Master on 2026-10-20.
 
 ## Verdict
 
@@ -66,7 +68,7 @@ move**. Three things hold it back now:
 | D6 | Line breaking | No `text-wrap` anywhere. The result: a lone-word line in the hero subhead at some widths, a line starting with an em dash ("—was also a real collaborator") in How It Was Made, and the What This Is bridge button "Read Chapter One" wrapping to three lines at 1440. | `text-wrap: balance` on h1–h3, bridge lines and the pull quote. `text-wrap: pretty` on paragraphs. `white-space: nowrap` plus a sensible `min-width` on buttons. |
 | D7 | Consent block (both forms) | The frozen v2 consent sentence (~70 words) is set in 12 px mono at a long measure. The legal text is the hardest-to-read text on the page. | Set it in the body serif at ~0.85 rem, line-height ~1.6, `max-width: 60ch`. Keep the label and status in mono. Copy, order and the visible privacy link stay unchanged. |
 | D8 | `.synopsis-text em` | The book title is colored amber in one paragraph: a single-word color accent. | Drop the color and keep the italics. |
-| D9 | Micro-motion | The 2026-08-19 decision was **both** motifs: a cursor blink beside file/artifact labels, and the signal pulse on the hero/CTA indigo, kept in separate regions. Only the signal pulse is built. | Add the cursor blink beside the Sample card's label and the figcaption file label only. Use a `steps()` animation, never in the same viewport as the signal pulse, and remove it under `prefers-reduced-motion`. |
+| D9 | Micro-motion | The 2026-08-19 decision was **both** motifs: a cursor blink beside file/artifact labels, and the signal pulse on the hero/CTA indigo, kept in separate regions. Only the signal pulse is built. | Add the cursor blink beside the Sample card's label only. The hero figcaption shares a viewport with the signal pulse and must remain static. Use a `steps()` animation and remove it under `prefers-reduced-motion`. |
 
 ## Design moves: second batch
 
@@ -232,6 +234,22 @@ Fetch the Master fresh and follow §6.10. In summary:
 - **Glyph:** U+2609 ☉ must render deliberately. Include it in the self-hosted font subset (D1)
   if the face has it. Otherwise set it in a span with a chosen fallback face, and check it at
   every byline location.
+
+## C2: reader-facing genre wording (batch 1 review, approved in Master revision 2)
+
+Fetch the Master fresh and follow §5.1, §5.12, §6.7, and §6.11. In summary:
+- Hero annotation: **Recursive Prophet · A novel**.
+- Hero supporting line: **Then it began shaping him in return.** This line is provisional; keep
+  it in one public location so the next revision is contained.
+- Hero deck: **An intimate novel about personal identity and creative ownership in the age of AI.**
+- Footer: **An intimate novel by Chris Everson and D☉C.**
+- Page title: **Recursive Prophet — A Novel by Chris Everson and D☉C**.
+- Share description: **An intimate novel about personal identity, creative ownership, and what
+  remains ours when the tools that expand our lives begin shaping them.**
+- Keep the FAQ answer and §5.3 Who It's For wording unchanged. Formal genre contexts remain
+  literary speculative fiction.
+- Sync the short bio to Master §6.6: “assistants, a process,” not “assistants—a process.”
+- Update the strict audit's copy and metadata contracts in the same change.
 
 ## Owner inputs (not Codex's call)
 

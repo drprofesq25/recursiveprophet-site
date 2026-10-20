@@ -142,19 +142,27 @@ for (const vp of VIEWPORTS) {
     bodyItalic: document.fonts.check('italic 400 16px "Libre Baskerville"'),
     mono: document.fonts.check('400 12px "DM Mono"'),
   }));
-  const mobileHero = vp.label === 'mobile' ? await page.evaluate(() => {
+  const mobileHero = vp.width <= 700 ? await page.evaluate(() => {
     const compact = document.querySelector('.hero-cover-compact');
     const buttons = document.querySelector('.hero-btns');
+    const annotation = document.querySelector('.hero-annotation');
+    const fullCover = document.querySelector('.cover-img');
     const compactRect = compact?.getBoundingClientRect();
     const buttonsRect = buttons?.getBoundingClientRect();
+    const annotationRect = annotation?.getBoundingClientRect();
+    const annotationLineHeight = annotation ? Number.parseFloat(getComputedStyle(annotation).lineHeight) : 0;
+    const fullCoverRect = fullCover?.getBoundingClientRect();
     return {
-      compactVisible: Boolean(compactRect && compactRect.width >= 96 && compactRect.bottom <= innerHeight),
+      compactVisible: Boolean(compactRect && compactRect.width >= 80 && compactRect.width <= 88 && compactRect.bottom <= innerHeight),
+      annotationSingleLine: Boolean(annotation && annotationRect &&
+        annotationRect.height <= annotationLineHeight * 1.25 && annotation.scrollWidth <= annotation.clientWidth + 1),
       buttonsAboveFold: Boolean(buttonsRect && buttonsRect.bottom <= innerHeight),
+      fullCoverBelowFold: Boolean(fullCoverRect && fullCoverRect.top >= innerHeight),
     };
   }) : null;
 
   await page.screenshot({ path: join(OUT, `home-${vp.label}-first-viewport-cold.png`) });
-  for (const image of await page.locator('img[loading="lazy"]').all()) {
+  for (const image of await page.locator('img[loading="lazy"]:visible').all()) {
     await image.scrollIntoViewIfNeeded();
     await image.evaluate(async (element) => {
       if (element instanceof HTMLImageElement) await element.decode();
@@ -174,11 +182,17 @@ for (const vp of VIEWPORTS) {
   if (img) console.log(`  cover negotiated: ${img.src} rendered at ${img.rendered}px`);
   console.log(`  axe violations: ${results.violations.length}`);
   const externalFonts = requestUrls.filter((url) => /fonts\.(?:googleapis|gstatic)\.com/i.test(url));
+  const compactCoverRequests = requestUrls.filter((url) => /rp-cover-300\.(?:webp|jpg)(?:$|\?)/i.test(url));
   const fontChecksPass = Object.values(fontState).every(Boolean);
   if (!fontChecksPass) contractFailures++;
   if (externalFonts.length) contractFailures++;
   console.log(`  ${fontChecksPass ? 'PASS' : 'FAIL'} cold-cache webfonts loaded`);
   console.log(`  ${externalFonts.length === 0 ? 'PASS' : 'FAIL'} no Google font requests`);
+  if (vp.label === 'desktop') {
+    const desktopCompactCoverNotFetched = compactCoverRequests.length === 0;
+    if (!desktopCompactCoverNotFetched) contractFailures++;
+    console.log(`  ${desktopCompactCoverNotFetched ? 'PASS' : 'FAIL'} desktop compact cover not fetched`);
+  }
   if (mobileHero) {
     for (const [name, passed] of Object.entries(mobileHero)) {
       if (!passed) contractFailures++;
@@ -376,7 +390,51 @@ const homeContract = await homePage.evaluate(() => {
     hasOldUnverifiedExcerpt: text.includes('He had told the system everything'),
     footerByline: normalized(document.querySelector('.footer-brand span')?.textContent ?? ''),
     coverByline: normalized(document.querySelector('.file-annotation > span:last-child')?.textContent ?? ''),
+    heroAnnotation: normalized(document.querySelector('.hero-annotation')?.textContent ?? ''),
+    heroSupportingLine: normalized(document.querySelector('.hero-subhead')?.textContent ?? ''),
+    heroDeck: normalized(document.querySelector('.hero-italic')?.textContent ?? ''),
+    aboutBio: normalized(document.querySelector('.about-chris-copy > p:last-child')?.textContent ?? ''),
+    heroCursorCount: document.querySelectorAll('.file-annotation .artifact-cursor').length,
+    sampleCursorCount: document.querySelectorAll('.chapter-preview-tag .artifact-cursor').length,
+    docSymbols: [...document.querySelectorAll('.doc-symbol')].map((symbol) => {
+      const style = getComputedStyle(symbol);
+      const circle = getComputedStyle(symbol, '::before');
+      const dot = getComputedStyle(symbol, '::after');
+      return {
+        text: symbol.textContent,
+        textIndent: Number.parseFloat(style.textIndent),
+        circle: circle.borderTopStyle === 'solid' && Number.parseFloat(circle.borderTopWidth) > 0,
+        dot: dot.backgroundColor !== 'rgba(0, 0, 0, 0)' &&
+          Number.parseFloat(dot.width) > 0 && Number.parseFloat(dot.height) > 0,
+      };
+    }),
+    bandOverflow: getComputedStyle(document.querySelector('.band-dark')).overflow,
+    whatHeadingPosition: getComputedStyle(document.querySelector('.what-heading-col')).position,
+    worksNodeDelta: (() => {
+      const thread = document.querySelector('.band-dark > .thread')?.getBoundingClientRect();
+      const node = document.querySelector('.thread-node-works')?.getBoundingClientRect();
+      return thread && node ? Math.abs((thread.left + thread.width / 2) - (node.left + node.width / 2)) : Infinity;
+    })(),
   };
+});
+
+const stickyState = await homePage.evaluate(async () => {
+  const band = document.querySelector('.band-dark');
+  const heading = document.querySelector('.what-heading-col');
+  if (!band || !heading) return null;
+  const originalScrollBehavior = document.documentElement.style.scrollBehavior;
+  document.documentElement.style.scrollBehavior = 'auto';
+  const bandTop = window.scrollY + band.getBoundingClientRect().top;
+  window.scrollTo(0, bandTop + 240);
+  await new Promise((resolveFrame) => requestAnimationFrame(() => requestAnimationFrame(resolveFrame)));
+  const result = {
+    actualTop: Math.round(heading.getBoundingClientRect().top),
+    expectedTop: Math.round(Number.parseFloat(getComputedStyle(heading).top)),
+  };
+  window.scrollTo(0, 0);
+  document.documentElement.style.scrollBehavior = originalScrollBehavior;
+  await new Promise((resolveFrame) => requestAnimationFrame(resolveFrame));
+  return result;
 });
 
 const socialCardAsset = await homePage.evaluate(async () => {
@@ -389,10 +447,10 @@ const socialCardAsset = await homePage.evaluate(async () => {
 });
 
 const homeChecks = {
-  pageTitle: homeContract.title === 'Recursive Prophet — A Speculative Novel by Chris Everson and D☉C',
+  pageTitle: homeContract.title === 'Recursive Prophet — A Novel by Chris Everson and D☉C',
   metaDescription: homeContract.description === 'A restless creator builds a Network of AI assistants to become his most complete self. The system works, but the line between assistance and authorship blurs.',
   socialTitle: homeContract.ogTitle === 'He Built the Network. It Began Shaping Him in Return.',
-  socialDescription: homeContract.ogDescription === 'An intimate speculative novel about personal identity, creative ownership, and what remains ours when the tools that expand our lives begin shaping them.',
+  socialDescription: homeContract.ogDescription === 'An intimate novel about personal identity, creative ownership, and what remains ours when the tools that expand our lives begin shaping them.',
   socialCardPath: homeContract.ogImage.endsWith('/social/rp-social-card-1200x630.jpg'),
   socialCardDimensions: homeContract.ogImageWidth === '1200' && homeContract.ogImageHeight === '630',
   socialCardAssetDimensions: socialCardAsset?.width === 1200 && socialCardAsset?.height === 630,
@@ -405,8 +463,20 @@ const homeChecks = {
     homeContract.structuredData?.author?.name === 'Chris Everson' &&
     homeContract.structuredData?.publisher?.name === 'The Bindery',
   approvedVisibleBylines: homeContract.footerByline ===
-    'An intimate speculative novel by Chris Everson and D☉C.' &&
+    'An intimate novel by Chris Everson and D☉C.' &&
     homeContract.coverByline === 'Recursive Prophet · Chris Everson and D☉C',
+  approvedHeroCopy: homeContract.heroAnnotation === 'Recursive Prophet · A novel' &&
+    homeContract.heroSupportingLine === 'Then it began shaping him in return.' &&
+    homeContract.heroDeck === 'An intimate novel about personal identity and creative ownership in the age of AI.',
+  approvedAuthorBio: homeContract.aboutBio ===
+    'Chris Everson is a Massachusetts writer, musician, and creative systems-builder. His work explores personal identity, family, creativity, and human–AI collaboration. Recursive Prophet grew from an extended dialogue with a network of AI assistants, a process that became inseparable from the novel’s story.',
+  deterministicDocSymbol: homeContract.docSymbols.length === 2 &&
+    homeContract.docSymbols.every((symbol) => symbol.text === '☉' && symbol.textIndent < -1000 && symbol.circle && symbol.dot),
+  cursorRegionScoped: homeContract.heroCursorCount === 0 && homeContract.sampleCursorCount === 1,
+  whatHeadingSticks: homeContract.bandOverflow === 'clip' &&
+    homeContract.whatHeadingPosition === 'sticky' && stickyState !== null &&
+    Math.abs(stickyState.actualTop - stickyState.expectedTop) <= 1,
+  worksNodeOnThread: homeContract.worksNodeDelta <= 1,
   twoCaptureForms: homeContract.formCount === 2,
   captureFormsMatchMaster: homeContract.formsValid,
   sectionBridgesTargetForm: homeContract.allBridgesTargetForm,

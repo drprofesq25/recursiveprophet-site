@@ -1,13 +1,13 @@
 /** Site-wide release state. Unresolved values remain production-gated. */
 
 export const SITE = {
-  title: 'Recursive Prophet — A Speculative Novel by Chris Everson and D☉C',
+  title: 'Recursive Prophet — A Novel by Chris Everson and D☉C',
   titleShort: 'Recursive Prophet',
   description:
     'A restless creator builds a Network of AI assistants to become his most complete self. The system works, but the line between assistance and authorship blurs.',
   shareTitle: 'He Built the Network. It Began Shaping Him in Return.',
   shareDescription:
-    'An intimate speculative novel about personal identity, creative ownership, and what remains ours when the tools that expand our lives begin shaping them.',
+    'An intimate novel about personal identity, creative ownership, and what remains ours when the tools that expand our lives begin shaping them.',
   url: 'https://recursiveprophet.com',
   authors: 'Chris Everson',
   locale: 'en_US',

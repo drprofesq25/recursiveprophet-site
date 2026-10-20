@@ -23,7 +23,7 @@ inherited defects without regressing the behaviors below.
   only the hero display face and body regular are preloaded, and metric-matched fallbacks preserve
   CLS 0 while the fonts swap.
 - **Reduced motion passes all five checks:** smooth scrolling and the decorative signal loop are
-  disabled; the constellation, section thread, and file-label cursor remain legible and static.
+  disabled; the constellation, section thread, and Sample-card cursor remain legible and static.
 - **The first mobile viewport shows the book and the full choice:** the compact cover is visible and
   both hero calls to action end above the 844px fold at 390px wide. The full responsive cover still
   follows the actions.
@@ -35,7 +35,7 @@ inherited defects without regressing the behaviors below.
 - **Responsive cover negotiation remains correct:** `rp-cover-450.webp` at 350px desktop and
   `rp-cover-300.webp` at 215px mobile / 190px reflow. The compact and full mobile placements reuse
   the existing aspect-ratio-preserving renditions.
-- **388 DOM nodes** on the home page and a deterministic build weight of **1,130 KB in `dist/`**:
+- **387 DOM nodes** on the home page and a deterministic build weight of **1,130 KB in `dist/`**:
   601 KB JPG, 305 KB WebP, 128 KB WOFF2, 59 KB HTML, 23 KB CSS, 13 KB text, and 1 KB across XML and
   SVG. The font payload is below the 220 KB gate. A site visitor receives one responsive cover
   rendition at a time; the separate social card is fetched by link-preview crawlers, not by the
@@ -47,12 +47,15 @@ inherited defects without regressing the behaviors below.
   actions. The legacy routes redirect to the corresponding Chapter One states and are also
   `noindex`. The missing-page experience is also `noindex` and excluded from the sitemap. The strict
   audit asserts those contracts plus the approved metadata, Book structured data, crawler files,
-  signup copy, consent, privacy-notice surface, local-font delivery, mobile hero composition, and
-  the split visible/metadata byline contract.
+  signup copy, consent, privacy-notice surface, local-font delivery, mobile hero composition, the
+  split visible/metadata byline contract, deterministic D☉C mark, sticky desktop heading, thread
+  alignment, and region-scoped cursor motion.
 
-The browser reported 10 requests and 318 KB fetched on desktop, and 9 requests and 241 KB at both
+The browser reported 9 requests and 281 KB fetched on desktop, and 9 requests and 241 KB at both
 390px and 320px. Full-page screenshot behavior and browser builds can change those observations;
 as before, use the deterministic `dist/` inventory—not browser request totals—as the weight budget.
+The desktop contract also confirms that the hidden compact cover is not requested; mobile reuses a
+single responsive cover asset for its compact and full placements.
 
 Cold-cache review captures are committed at
 `docs/review/BQ-270-polish/home-{desktop,mobile}-{first-cold,full}.webp`.

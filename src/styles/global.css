@@ -425,8 +425,38 @@ p {
 }
 
 .doc-symbol {
-  font-family: 'Segoe UI Symbol', 'Noto Sans Symbols 2', sans-serif;
-  font-size: 0.9em;
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+  width: 0.78em;
+  height: 0.78em;
+  color: inherit;
+  font-size: 1em;
+  line-height: 1;
+  text-indent: -9999px;
+  vertical-align: -0.08em;
+}
+
+.doc-symbol::before,
+.doc-symbol::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.doc-symbol::before {
+  width: 0.58em;
+  height: 0.58em;
+  border: 0.08em solid currentColor;
+}
+
+.doc-symbol::after {
+  width: 0.16em;
+  height: 0.16em;
+  background: currentColor;
 }
 
 .artifact-cursor {
@@ -705,7 +735,7 @@ h2 {
 /* What this is */
 .band-dark {
   position: relative;
-  overflow: hidden;
+  overflow: clip;
   background: var(--night);
   color: var(--paper);
 }
@@ -779,7 +809,6 @@ h2 {
 }
 
 .what-copy .what-emphasis {
-  position: relative;
   margin-block: 2.6rem 2.4rem;
   color: var(--paper);
   font-family: var(--display);
@@ -1500,7 +1529,7 @@ footer a {
 
 @media (max-width: 700px) {
   .hero-text {
-    padding: 5.5rem 1.25rem 1.5rem 2.65rem;
+    padding: 7.5rem 1.25rem 4rem 2.65rem;
   }
 
   .hero-kicker {
@@ -1510,14 +1539,21 @@ footer a {
   }
 
   .hero-annotation {
-    max-width: 18ch;
+    max-width: none;
     margin-bottom: 0;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+
+  .hero-annotation::before {
+    display: none;
   }
 
   .hero-cover-compact {
     display: block;
     flex: 0 0 auto;
-    width: 96px;
+    width: 84px;
   }
 
   .hero-cover-compact img {
@@ -1527,18 +1563,15 @@ footer a {
   }
 
   .hero h1 {
-    margin-bottom: 1rem;
     font-size: clamp(2.75rem, 13vw, 3.4rem);
   }
 
   .hero-subhead {
-    margin-bottom: 0.65rem;
     font-size: 1rem;
     line-height: 1.5;
   }
 
   .hero-italic {
-    margin-bottom: 1.1rem;
     font-size: 1.05rem;
     line-height: 1.45;
   }
@@ -1548,17 +1581,12 @@ footer a {
     flex-wrap: wrap;
     align-items: center;
     gap: 0.65rem;
-    margin-bottom: 0;
   }
 
   .hero-btns a {
     width: auto;
     min-width: min(10rem, 100%);
     flex: 1 1 10rem;
-  }
-
-  .hero-right {
-    padding-top: 2rem;
   }
 
   .thread-node {

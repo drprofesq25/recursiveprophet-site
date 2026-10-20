@@ -5,22 +5,22 @@ import Constellation from './Constellation.astro';
   <div class="signal-line" aria-hidden="true"></div>
   <div class="hero-text">
     <div class="hero-kicker">
-      <p class="hero-annotation">Recursive Prophet · A speculative novel</p>
+      <p class="hero-annotation">Recursive Prophet · A novel</p>
       <picture class="hero-cover-compact" aria-hidden="true">
-        <source type="image/webp" srcset="/cover/rp-cover-300.webp" />
+        <source media="(max-width: 700px)" type="image/webp" srcset="/cover/rp-cover-300.webp" />
         <img
           src="/cover/rp-cover-300.jpg"
           width="300"
           height="480"
           alt=""
-          fetchpriority="high"
+          loading="lazy"
           decoding="async"
         />
       </picture>
     </div>
     <h1 id="book-title">He built the Network to help him become the fullest version of himself.</h1>
-    <p class="hero-subhead">The system works. That is where the questions begin.</p>
-    <p class="hero-italic">An intimate speculative novel about personal identity and creative ownership in the age of AI.</p>
+    <p class="hero-subhead">Then it began shaping him in return.</p>
+    <p class="hero-italic">An intimate novel about personal identity and creative ownership in the age of AI.</p>
     <div class="hero-btns">
       <a href="#sample" class="btn-primary">Read Chapter One</a>
       <a href="#story" class="btn-secondary">Explore the Book</a>
@@ -52,7 +52,7 @@ import Constellation from './Constellation.astro';
         <div class="cover-shadow"></div>
       </div>
       <figcaption class="file-annotation">
-        <span>Working cover · final production master pending<span class="artifact-cursor" aria-hidden="true"></span></span>
+        <span>Working cover · final production master pending</span>
         <span>Recursive Prophet · Chris Everson and D<span class="doc-symbol">☉</span>C</span>
       </figcaption>
     </figure>
