@@ -2010,3 +2010,63 @@ footer a {
     margin-right: 0;
   }
 }
+
+/* How It Was Made: one sidebar artifact replaces the pull quote and the bridge.
+   A night "terminal" card holding a verbatim T∆RS log line (Chapter Six), the
+   promise of the preserved first conversation, and the bridge button. */
+.making-artifact {
+  position: sticky;
+  top: 7rem;
+  align-self: start;
+  margin-top: 6rem;
+  padding: 1.9rem 1.75rem 2rem;
+  background: var(--night);
+  color: var(--paper);
+  box-shadow: 0 1.4rem 2.6rem -1.4rem rgba(7, 17, 29, 0.55);
+}
+
+.making-artifact-head {
+  margin: 0 0 1rem;
+  color: var(--muted-on-dark);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+}
+
+.making-artifact-line {
+  margin: 0;
+}
+
+.making-artifact-line p {
+  margin: 0;
+  color: var(--gold);
+  font-family: var(--mono);
+  font-size: clamp(1.05rem, 1.6vw, 1.2rem);
+  line-height: 1.5;
+}
+
+.making-artifact-source {
+  margin: 0.85rem 0 1.6rem;
+  color: var(--muted-on-dark);
+  font-family: var(--display);
+  font-size: 0.95rem;
+  font-style: italic;
+}
+
+.making-artifact-bridge {
+  margin: 0 0 1.1rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(245, 240, 231, 0.14);
+  color: #ebe4d9;
+  font-family: var(--display);
+  font-size: clamp(1.2rem, 1.8vw, 1.4rem);
+  font-style: italic;
+  line-height: 1.35;
+}
+
+@media (max-width: 900px) {
+  .making-artifact {
+    position: static;
+    margin-top: 0;
+  }
+}
