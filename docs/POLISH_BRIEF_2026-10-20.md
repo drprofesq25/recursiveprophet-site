@@ -227,7 +227,7 @@ Fetch the Master fresh and follow §6.10. In summary:
 - **Keep "Chris Everson" only:**
   - `SITE.authors`, `meta name="author"` and the Book schema `author`;
   - the © line;
-  - the press and bio text (§6.6 and §6.9 are not yet decided).
+  - the press and bio text (§6.6 and §6.9 are confirmed as written).
 - **Update the strict audit's copy and metadata contracts** to the new strings in the same change.
 - **Glyph:** U+2609 ☉ must render deliberately. Include it in the self-hosted font subset (D1)
   if the face has it. Otherwise set it in a span with a chosen fallback face, and check it at
