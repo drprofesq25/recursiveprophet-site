@@ -1,0 +1,13 @@
+---
+import InteriorPage from '../../components/InteriorPage.astro';
+---
+<InteriorPage
+  eyebrow="Request not completed"
+  title="The Archive did not open."
+  description="Your Chapter One request could not be completed."
+  noIndex
+  actions={[{ label: 'Try Again', href: '/#sample', style: 'primary' }]}
+>
+  <p>Something interrupted the transmission before your request could be completed. Your address has not been added.</p>
+  <p>Please return to the form and try again.</p>
+</InteriorPage>

@@ -1,0 +1,167 @@
+---
+import { CAPTURE } from '../consts';
+
+interface Props {
+  idPrefix: string;
+  label: string;
+  placeholder?: string;
+  buttonClass?: 'btn-ink' | 'btn-paper';
+  tone?: 'light' | 'dark';
+}
+
+const {
+  idPrefix,
+  label,
+  placeholder,
+  buttonClass = 'btn-ink',
+  tone = 'light',
+} = Astro.props;
+
+const emailId = `${idPrefix}-email`;
+const websiteId = `${idPrefix}-website`;
+const consentId = `${idPrefix}-consent`;
+const privacyId = `${idPrefix}-privacy`;
+const reassuranceId = `${idPrefix}-reassurance`;
+const statusId = `${idPrefix}-status`;
+---
+<form
+  class:list={['capture-form', { 'capture-form-dark': tone === 'dark' }]}
+  method="POST"
+  action={CAPTURE.action}
+  data-capture-form
+>
+  <div class="capture-honeypot" aria-hidden="true">
+    <label for={websiteId}>Leave this field empty</label>
+    <input id={websiteId} name="website" type="text" tabindex="-1" autocomplete="off" />
+  </div>
+  <div class="capture-field">
+    <label for={emailId}>{label}</label>
+    <input
+      id={emailId}
+      name="fields[email]"
+      type="email"
+      required
+      autocomplete="email"
+      inputmode="email"
+      placeholder={placeholder}
+      aria-describedby={`${consentId} ${privacyId} ${reassuranceId} ${statusId}`}
+    />
+  </div>
+  <button type="submit" class={buttonClass} data-submit-button data-default-label="Send Me Chapter One">
+    Send Me Chapter One
+  </button>
+  <p class="capture-consent" id={consentId}>
+    Enter your email and confirm your address to receive Chapter One and an invitation to the
+    Archive, followed the next day by the first preserved conversation between Chris Everson and
+    T∆RS. You’ll also receive occasional emails from Chris about <em>Recursive Prophet</em>—including
+    book news, selected artifacts, and transmissions from the Archive—and you can unsubscribe at
+    any time.
+  </p>
+  <p class="capture-privacy" id={privacyId}>
+    <a href={CAPTURE.privacyPath}>Email-list privacy</a>
+  </p>
+  <p class="capture-note" id={reassuranceId}>
+    No daily noise. Only book news, selected artifacts, and transmissions from the Archive.
+  </p>
+  <p class="capture-status" id={statusId} role="status" aria-live="polite" data-form-status></p>
+</form>
+
+<script>
+  const invalidMessage = 'That address does not appear to be complete. Give it another look.';
+
+  for (const form of document.querySelectorAll<HTMLFormElement>('[data-capture-form]')) {
+    const status = form.querySelector<HTMLElement>('[data-form-status]');
+    const button = form.querySelector<HTMLButtonElement>('[data-submit-button]');
+    const email = form.querySelector<HTMLInputElement>('input[type="email"]');
+
+    form.addEventListener(
+      'invalid',
+      (event) => {
+        if (status) status.textContent = invalidMessage;
+        if (email && event.target === email) email.setAttribute('aria-invalid', 'true');
+      },
+      true,
+    );
+
+    form.addEventListener('input', () => {
+      if (status) status.textContent = '';
+      if (button) button.textContent = button.dataset.defaultLabel ?? 'Send Me Chapter One';
+      email?.removeAttribute('aria-invalid');
+    });
+
+    form.addEventListener('submit', () => {
+      if (status) status.textContent = 'Opening the Archive…';
+      if (button) button.textContent = 'Opening the Archive…';
+    });
+  }
+</script>
+
+<style>
+  .capture-form {
+    width: min(100%, 34rem);
+    margin-top: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    text-align: left;
+  }
+
+  .capture-field { display: flex; flex-direction: column; gap: 0.4rem; }
+
+  .capture-field label {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .capture-field input {
+    min-height: 3.25rem;
+    font-family: var(--body);
+    font-size: 1rem;
+    padding: 0.75rem 0.9rem;
+    color: var(--ink);
+    background: var(--white);
+    border: 1px solid var(--rule-strong);
+    border-radius: 0;
+  }
+
+  .capture-field input:focus-visible { border-color: var(--signal); }
+  .capture-form button { align-self: flex-start; cursor: pointer; min-height: 3rem; }
+
+  .capture-note,
+  .capture-consent,
+  .capture-privacy,
+  .capture-status {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    letter-spacing: 0.025em;
+    line-height: 1.65;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  .capture-consent { margin-top: 0.35rem; }
+  .capture-privacy a { color: var(--signal); }
+  .capture-status { min-height: 1.1rem; color: var(--amber); }
+
+  .capture-form-dark .capture-field label,
+  .capture-form-dark .capture-note,
+  .capture-form-dark .capture-consent,
+  .capture-form-dark .capture-privacy,
+  .capture-form-dark .capture-status { color: var(--muted-on-dark); }
+
+  .capture-form-dark .capture-privacy a { color: var(--signal-light); }
+  .capture-form-dark .capture-status { color: var(--signal-light); }
+  .capture-form-dark button { border-color: var(--paper); }
+
+  .capture-honeypot {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+</style>

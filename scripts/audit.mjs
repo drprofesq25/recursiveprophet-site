@@ -5,9 +5,10 @@
  *   npm run audit            report only, always exits 0
  *   npm run audit -- --strict  exit 1 on any serious/critical violation (for CI)
  *
- * Serves ./dist itself, runs axe-core at desktop and mobile widths, checks the FAQ
- * is keyboard-operable, reports which cover rendition the browser negotiated, and
- * writes full-page screenshots to .audit/ (gitignored).
+ * Serves ./dist itself, runs axe-core at desktop, mobile, and 320px reflow widths,
+ * checks reduced motion, the FAQ, capture forms, approved metadata/copy, and route contracts, reports
+ * which cover rendition the browser negotiated, and writes full-page screenshots
+ * to .audit/ (gitignored).
  *
  * NOTE ON TIMINGS: wall-clock numbers (FCP/LCP) are deliberately NOT reported.
  * They are meaningless on a contended CI box or sandbox -- measure speed against a
@@ -15,7 +16,7 @@
  * because they do not depend on machine speed.
  */
 import { createServer } from 'node:http';
-import { readFile, mkdir, readFileSync, existsSync } from 'node:fs';
+import { readFile, readFileSync, existsSync } from 'node:fs';
 import { readFile as read } from 'node:fs/promises';
 import { mkdirSync } from 'node:fs';
 import { join, extname, resolve } from 'node:path';
@@ -50,7 +51,14 @@ const server = createServer((req, res) => {
   const file = join(DIST, p);
   if (!file.startsWith(DIST)) { res.writeHead(403).end(); return; }
   readFile(file, (err, buf) => {
-    if (err) { res.writeHead(404).end('not found'); return; }
+    if (err) {
+      readFile(join(DIST, '404.html'), (notFoundErr, notFoundBuf) => {
+        if (notFoundErr) { res.writeHead(404).end('not found'); return; }
+        res.writeHead(404, { 'content-type': 'text/html' });
+        res.end(notFoundBuf);
+      });
+      return;
+    }
     res.writeHead(200, { 'content-type': MIME[extname(file)] ?? 'application/octet-stream' });
     res.end(buf);
   });
@@ -86,6 +94,7 @@ try {
 const VIEWPORTS = [
   { label: 'desktop', width: 1440, height: 900 },
   { label: 'mobile',  width: 390,  height: 844 },
+  { label: 'reflow',  width: 320,  height: 800 },
 ];
 
 const serious = new Set();   // distinct violation ids, not per-viewport repeats
@@ -157,6 +166,58 @@ if (seen.size) {
     console.log(`  ${k}  ratio ${g.ratio} needs ${g.need}  (${g.count} node hit(s))`);
 }
 
+// --- reduced-motion contract: no decorative loop and no smooth scrolling ---
+const reducedCtx = await browser.newContext({
+  viewport: { width: 390, height: 844 },
+  reducedMotion: 'reduce',
+});
+const reducedPage = await reducedCtx.newPage();
+await reducedPage.goto(URL_, { waitUntil: 'load' });
+const reducedState = await reducedPage.evaluate(() => {
+  const signal = document.querySelector('.signal-line');
+  return {
+    scrollBehavior: getComputedStyle(document.documentElement).scrollBehavior,
+    signalAnimation: signal ? getComputedStyle(signal).animationName : '',
+  };
+});
+const reducedChecks = {
+  smoothScrollDisabled: reducedState.scrollBehavior === 'auto',
+  decorativeLoopDisabled: reducedState.signalAnimation === 'none',
+};
+console.log('\n=== reduced motion ===');
+for (const [name, passed] of Object.entries(reducedChecks)) {
+  if (!passed) contractFailures++;
+  console.log(`  ${passed ? 'PASS' : 'FAIL'} ${name}`);
+}
+
+await reducedPage.locator('a.nav-cta').click();
+const mobilePathState = await reducedPage.evaluate(() => {
+  const section = document.querySelector('#sample');
+  const header = document.querySelector('.site-header');
+  const navCta = document.querySelector('.site-nav .nav-cta');
+  const capture = document.querySelector('#sample .sample-cta-col');
+  const preview = document.querySelector('#sample .chapter-preview');
+  return {
+    sectionTop: Math.round(section?.getBoundingClientRect().top ?? -1),
+    headerHeight: Math.round(header?.getBoundingClientRect().height ?? -1),
+    captureTop: Math.round(capture?.getBoundingClientRect().top ?? -1),
+    previewTop: Math.round(preview?.getBoundingClientRect().top ?? -1),
+    navCtaColor: navCta ? getComputedStyle(navCta).color : '',
+  };
+});
+const mobilePathChecks = {
+  capturePrecedesPreview: mobilePathState.captureTop < mobilePathState.previewTop,
+  anchorClearsHeaderOnce: mobilePathState.sectionTop >= mobilePathState.headerHeight &&
+    mobilePathState.sectionTop <= mobilePathState.headerHeight + 20,
+  navCtaTextRemainsInk: mobilePathState.navCtaColor === 'rgb(23, 20, 18)',
+};
+console.log('\n=== mobile capture path ===');
+for (const [name, passed] of Object.entries(mobilePathChecks)) {
+  if (!passed) contractFailures++;
+  console.log(`  ${passed ? 'PASS' : 'FAIL'} ${name}`);
+}
+await reducedCtx.close();
+
 // --- deterministic asset inventory (filesystem, not the network) ---
 import { readdirSync, statSync } from 'node:fs';
 function inventory(dir, acc = { total: 0, byExt: {} }) {
@@ -208,19 +269,135 @@ for (const [k, v] of Object.entries(kb)) {
 }
 await ctx.close();
 
+// --- approved home-page copy, metadata, and dual-form contract ---
+const homeCtx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+const homePage = await homeCtx.newPage();
+await homePage.goto(URL_, { waitUntil: 'load' });
+const homeContract = await homePage.evaluate(() => {
+  const text = document.body.textContent ?? '';
+  const normalized = (value) => value.replace(/\s+/g, ' ').trim();
+  const expectedConsent = normalized(
+    'Enter your email and confirm your address to receive Chapter One and an invitation to the Archive, followed the next day by the first preserved conversation between Chris Everson and T∆RS. You’ll also receive occasional emails from Chris about Recursive Prophet—including book news, selected artifacts, and transmissions from the Archive—and you can unsubscribe at any time.'
+  );
+  const forms = [...document.querySelectorAll('form[data-capture-form]')];
+  return {
+    title: document.title,
+    description: document.querySelector('meta[name="description"]')?.getAttribute('content') ?? '',
+    ogTitle: document.querySelector('meta[property="og:title"]')?.getAttribute('content') ?? '',
+    ogDescription: document.querySelector('meta[property="og:description"]')?.getAttribute('content') ?? '',
+    ogImage: document.querySelector('meta[property="og:image"]')?.getAttribute('content') ?? '',
+    ogImageWidth: document.querySelector('meta[property="og:image:width"]')?.getAttribute('content') ?? '',
+    ogImageHeight: document.querySelector('meta[property="og:image:height"]')?.getAttribute('content') ?? '',
+    twitterCard: document.querySelector('meta[name="twitter:card"]')?.getAttribute('content') ?? '',
+    twitterImage: document.querySelector('meta[name="twitter:image"]')?.getAttribute('content') ?? '',
+    structuredData: (() => {
+      try {
+        return JSON.parse(document.querySelector('script[type="application/ld+json"]')?.textContent ?? 'null');
+      } catch {
+        return null;
+      }
+    })(),
+    formCount: forms.length,
+    formsValid: forms.every((form) => {
+      const consent = form.querySelector('.capture-consent');
+      const privacy = form.querySelector('.capture-privacy a');
+      const email = form.querySelector('input[type="email"]');
+      const honeypot = form.querySelector('input[name="website"]');
+      const button = form.querySelector('button[type="submit"]');
+      return normalized(consent?.textContent ?? '') === expectedConsent &&
+        privacy?.textContent?.trim() === 'Email-list privacy' &&
+        privacy?.getAttribute('href') === '/privacy/' &&
+        email?.getAttribute('name') === 'fields[email]' &&
+        email?.hasAttribute('required') &&
+        honeypot !== null &&
+        button?.textContent?.trim() === 'Send Me Chapter One';
+    }),
+    allBridgesTargetForm: [...document.querySelectorAll('.section-bridge a')]
+      .every((link) => link.getAttribute('href') === '#sample'),
+    hasRetiredFirstFile: /First File|Open the First File/i.test(text),
+    hasStaleDate: text.includes('September 13, 2026'),
+    hasOldUnverifiedExcerpt: text.includes('He had told the system everything'),
+  };
+});
+
+const socialCardAsset = await homePage.evaluate(async () => {
+  const src = document.querySelector('meta[property="og:image"]')?.getAttribute('content');
+  if (!src) return null;
+  const image = new Image();
+  image.src = new URL(new URL(src).pathname, window.location.origin).href;
+  await image.decode();
+  return { width: image.naturalWidth, height: image.naturalHeight };
+});
+
+const homeChecks = {
+  pageTitle: homeContract.title === 'Recursive Prophet — A Speculative Novel by Chris Everson',
+  metaDescription: homeContract.description === 'A restless creator builds a Network of AI assistants to become his most complete self. The system works, but the line between assistance and authorship blurs.',
+  socialTitle: homeContract.ogTitle === 'He Built the Network. It Began Shaping Him in Return.',
+  socialDescription: homeContract.ogDescription === 'An intimate speculative novel about personal identity, creative ownership, and what remains ours when the tools that expand our lives begin shaping them.',
+  socialCardPath: homeContract.ogImage.endsWith('/social/rp-social-card-1200x630.jpg'),
+  socialCardDimensions: homeContract.ogImageWidth === '1200' && homeContract.ogImageHeight === '630',
+  socialCardAssetDimensions: socialCardAsset?.width === 1200 && socialCardAsset?.height === 630,
+  socialCardSharedAcrossMetadata: homeContract.twitterCard === 'summary_large_image' &&
+    homeContract.twitterImage === homeContract.ogImage,
+  bookStructuredData: homeContract.structuredData?.['@type'] === 'Book' &&
+    homeContract.structuredData?.name === 'Recursive Prophet' &&
+    homeContract.structuredData?.author?.name === 'Chris Everson' &&
+    homeContract.structuredData?.publisher?.name === 'The Bindery',
+  twoCaptureForms: homeContract.formCount === 2,
+  captureFormsMatchMaster: homeContract.formsValid,
+  sectionBridgesTargetForm: homeContract.allBridgesTargetForm,
+  firstFileRetired: !homeContract.hasRetiredFirstFile,
+  staleDateRemoved: !homeContract.hasStaleDate,
+  unverifiedExcerptRemoved: !homeContract.hasOldUnverifiedExcerpt,
+};
+
+const firstForm = homePage.locator('form[data-capture-form]').first();
+const firstEmail = firstForm.locator('input[type="email"]');
+await firstEmail.fill('not-an-email');
+await firstForm.locator('button[type="submit"]').click();
+const invalidState = await firstForm.evaluate((form) => ({
+  message: form.querySelector('[data-form-status]')?.textContent?.trim() ?? '',
+  ariaInvalid: form.querySelector('input[type="email"]')?.getAttribute('aria-invalid') ?? '',
+}));
+homeChecks.invalidFeedback = invalidState.message ===
+  'That address does not appear to be complete. Give it another look.' &&
+  invalidState.ariaInvalid === 'true';
+
+await firstEmail.fill('reader@example.com');
+const recoveredState = await firstForm.evaluate((form) => ({
+  message: form.querySelector('[data-form-status]')?.textContent?.trim() ?? '',
+  ariaInvalid: form.querySelector('input[type="email"]')?.hasAttribute('aria-invalid') ?? true,
+}));
+homeChecks.invalidFeedbackClears = recoveredState.message === '' && !recoveredState.ariaInvalid;
+
+console.log('\n=== approved home-page contract ===');
+for (const [name, passed] of Object.entries(homeChecks)) {
+  if (!passed) contractFailures++;
+  console.log(`  ${passed ? 'PASS' : 'FAIL'} ${name}`);
+}
+await homeCtx.close();
+
 // --- transactional route contracts: honest actions and no search indexing ---
 const routeCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
 const routePage = await routeCtx.newPage();
 const routeContracts = [
   {
-    path: '/first-file/requested/',
-    actionText: 'Return to the book',
+    path: '/chapter-one/requested/',
+    heading: 'One more step.',
+    actionText: 'Return to the Book',
     actionHref: '/#book',
   },
   {
-    path: '/first-file/problem/',
-    actionText: 'Try the form again',
+    path: '/chapter-one/problem/',
+    heading: 'The Archive did not open.',
+    actionText: 'Try Again',
     actionHref: '/#sample',
+  },
+  {
+    path: '/chapter-one/confirmed/',
+    heading: 'Welcome to the Archive.',
+    actionText: 'Return to the Book',
+    actionHref: '/#book',
   },
 ];
 
@@ -231,6 +408,7 @@ for (const contract of routeContracts) {
     const action = document.querySelector('main .interior-actions a');
     return {
       robots: document.querySelector('meta[name="robots"]')?.getAttribute('content') ?? '',
+      heading: document.querySelector('main h1')?.textContent?.trim() ?? '',
       actionText: action?.textContent?.trim() ?? '',
       actionHref: action?.getAttribute('href') ?? '',
     };
@@ -238,6 +416,7 @@ for (const contract of routeContracts) {
   const checks = {
     status: response?.status() === 200,
     noIndex: state.robots.split(',').map((v) => v.trim()).includes('noindex'),
+    heading: state.heading === contract.heading,
     actionText: state.actionText === contract.actionText,
     actionHref: state.actionHref === contract.actionHref,
   };
@@ -245,6 +424,10 @@ for (const contract of routeContracts) {
     if (!passed) contractFailures++;
     console.log(`  ${passed ? 'PASS' : 'FAIL'} ${contract.path} ${name}`);
   }
+  await routePage.screenshot({
+    path: join(OUT, `route-${contract.path.split('/').filter(Boolean).pop()}.png`),
+    fullPage: true,
+  });
 }
 
 const sitemap = readFileSync(join(DIST, 'sitemap-0.xml'), 'utf8');
@@ -253,7 +436,92 @@ for (const contract of routeContracts) {
   if (!excluded) contractFailures++;
   console.log(`  ${excluded ? 'PASS' : 'FAIL'} ${contract.path} excludedFromSitemap`);
 }
+
+const legacyRedirects = [
+  ['/first-file/requested/', '/chapter-one/requested'],
+  ['/first-file/problem/', '/chapter-one/problem'],
+];
+for (const [legacyPath, targetPath] of legacyRedirects) {
+  const html = readFileSync(join(DIST, legacyPath, 'index.html'), 'utf8');
+  const redirects = html.includes(`url=${targetPath}`) &&
+    html.includes(`href="${targetPath}"`) &&
+    html.includes('content="noindex"');
+  if (!redirects) contractFailures++;
+  console.log(`  ${redirects ? 'PASS' : 'FAIL'} ${legacyPath} redirectsTo ${targetPath}`);
+}
 await routeCtx.close();
+
+// --- missing-page and crawler contracts ---
+const missingCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+const missingPage = await missingCtx.newPage();
+const missingResponse = await missingPage.goto(new URL('/this-page-does-not-exist/', URL_).href, { waitUntil: 'load' });
+const missingState = await missingPage.evaluate(() => {
+  const action = document.querySelector('main .interior-actions a');
+  return {
+    robots: document.querySelector('meta[name="robots"]')?.getAttribute('content') ?? '',
+    heading: document.querySelector('main h1')?.textContent?.trim() ?? '',
+    text: document.querySelector('main .interior-copy')?.textContent?.replace(/\s+/g, ' ').trim() ?? '',
+    actionText: action?.textContent?.trim() ?? '',
+    actionHref: action?.getAttribute('href') ?? '',
+  };
+});
+const missingChecks = {
+  status: missingResponse?.status() === 404,
+  noIndex: missingState.robots.split(',').map((value) => value.trim()).includes('noindex'),
+  heading: missingState.heading === 'This page has gone missing.',
+  approvedCopy: missingState.text === 'The Network remembers many things. Apparently, this was not one of them.',
+  actionText: missingState.actionText === 'Return to the Book',
+  actionHref: missingState.actionHref === '/#book',
+};
+console.log('\n=== missing-page contract ===');
+for (const [name, passed] of Object.entries(missingChecks)) {
+  if (!passed) contractFailures++;
+  console.log(`  ${passed ? 'PASS' : 'FAIL'} ${name}`);
+}
+await missingCtx.close();
+
+const robots = readFileSync(join(DIST, 'robots.txt'), 'utf8');
+const robotsChecks = {
+  allowsCrawling: /^Allow:\s*\/$/m.test(robots),
+  namesCanonicalSitemap: robots.includes('Sitemap: https://recursiveprophet.com/sitemap-index.xml'),
+  missingPageExcludedFromSitemap: !sitemap.includes('/404/'),
+};
+console.log('\n=== crawler contract ===');
+for (const [name, passed] of Object.entries(robotsChecks)) {
+  if (!passed) contractFailures++;
+  console.log(`  ${passed ? 'PASS' : 'FAIL'} ${name}`);
+}
+
+// --- privacy notice: approved scope, visible consent version, and review screenshot ---
+const privacyCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+const privacyPage = await privacyCtx.newPage();
+const privacyResponse = await privacyPage.goto(new URL('/privacy/', URL_).href, { waitUntil: 'load' });
+const privacyState = await privacyPage.evaluate(() => {
+  const text = document.body.textContent ?? '';
+  return {
+    heading: document.querySelector('main h1')?.textContent?.trim() ?? '',
+    hasUpdatedDate: text.includes('October 16, 2026'),
+    hasConsentVersion: text.includes('rp-email-consent-2026-10-16-v2'),
+    hasProviderScope: text.includes('MailerLite processes subscriber information'),
+    hasRights: [...document.querySelectorAll('main h2')]
+      .some((heading) => heading.textContent?.trim() === 'Your choices'),
+  };
+});
+const privacyChecks = {
+  status: privacyResponse?.status() === 200,
+  heading: privacyState.heading === 'Email-list privacy',
+  updatedDate: privacyState.hasUpdatedDate,
+  consentVersion: privacyState.hasConsentVersion,
+  providerScope: privacyState.hasProviderScope,
+  rightsSection: privacyState.hasRights,
+};
+console.log('\n=== privacy notice contract ===');
+for (const [name, passed] of Object.entries(privacyChecks)) {
+  if (!passed) contractFailures++;
+  console.log(`  ${passed ? 'PASS' : 'FAIL'} ${name}`);
+}
+await privacyPage.screenshot({ path: join(OUT, 'privacy-mobile.png'), fullPage: true });
+await privacyCtx.close();
 
 await browser.close();
 server.close();
@@ -264,7 +532,7 @@ if (total) {
   const parts = [];
   if (serious.size) parts.push(`${serious.size} serious/critical a11y rule(s): ${[...serious].join(', ')}`);
   if (kbFailures) parts.push(`${kbFailures} keyboard check(s) failing`);
-  if (contractFailures) parts.push(`${contractFailures} transactional route contract check(s) failing`);
+  if (contractFailures) parts.push(`${contractFailures} contract check(s) failing`);
   console.log(`\n${parts.join('  |  ')}`);
   if (STRICT) { console.error('STRICT mode: failing.'); process.exit(1); }
   console.log('Reported, not gating. Use --strict to gate in CI.');

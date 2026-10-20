@@ -1,12 +1,20 @@
-<section class="final-section">
+---
+import CaptureForm from './CaptureForm.astro';
+---
+<section class="final-section" aria-labelledby="final-heading">
   <div class="final-inner">
-    <p class="final-eyebrow">Begin with the human story</p>
-    <h2 class="final-headline">The first door is Chapter 1.</h2>
-    <p class="final-sub">The Network and the Archive can wait. Meet the father who built the system first.</p>
-    <div class="final-btns">
-      <a href="#sample" class="btn-paper">Read Chapter 1</a>
-      <a href="#story" class="btn-ghost-final">Return to the premise</a>
+    <p class="final-eyebrow">The Archive begins here</p>
+    <h2 class="final-headline" id="final-heading">Begin at the Beginning</h2>
+    <p class="final-sub">Receive Chapter One of <em>Recursive Prophet</em> and your invitation to the Archive.</p>
+    <p class="final-sub">The following day, you’ll receive the first real conversation between Chris and T∆RS—preserved before either understood that their collaboration was becoming a story.</p>
+    <div class="final-form-wrap">
+      <CaptureForm
+        idPrefix="final-chapter-one"
+        label="Email address"
+        placeholder="you@example.com"
+        buttonClass="btn-paper"
+        tone="dark"
+      />
     </div>
-    <a href="#archive" class="final-signal-link">Unlock the Archive</a>
   </div>
 </section>

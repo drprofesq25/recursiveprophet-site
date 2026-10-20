@@ -6,11 +6,25 @@ import sitemap from '@astrojs/sitemap';
 export default defineConfig({
   site: 'https://recursiveprophet.com',
   trailingSlash: 'ignore',
+  server: {
+    allowedHosts: ['terminal.local'],
+  },
+  redirects: {
+    '/first-file/requested': '/chapter-one/requested',
+    '/first-file/problem': '/chapter-one/problem',
+  },
   integrations: [
     sitemap({
       filter: (page) => {
         const path = new URL(page).pathname;
-        return path !== '/first-file/requested/' && path !== '/first-file/problem/';
+        return ![
+          '/first-file/requested/',
+          '/first-file/problem/',
+          '/chapter-one/requested/',
+          '/chapter-one/problem/',
+          '/chapter-one/confirmed/',
+          '/404/',
+        ].includes(path);
       },
     }),
   ],
