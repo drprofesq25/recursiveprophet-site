@@ -38,6 +38,10 @@
   font-display: swap;
 }
 
+@view-transition {
+  navigation: auto;
+}
+
 *,
 *::before,
 *::after {
@@ -158,6 +162,7 @@ p {
   letter-spacing: 0.01em;
   line-height: 1;
   text-decoration: none;
+  view-transition-name: site-wordmark;
 }
 
 .site-nav {
@@ -168,11 +173,10 @@ p {
 
 .site-nav a {
   color: #d2cabf;
-  font-family: var(--mono);
-  font-size: 0.69rem;
-  letter-spacing: 0.09em;
+  font-family: var(--body);
+  font-size: 0.76rem;
+  letter-spacing: 0.015em;
   text-decoration: none;
-  text-transform: uppercase;
 }
 
 .site-nav a:not(.nav-cta):hover {
@@ -230,6 +234,11 @@ p {
   transform-origin: center;
 }
 
+.signal-line,
+.interior-signal {
+  view-transition-name: signal-thread;
+}
+
 .hero-text {
   position: relative;
   z-index: 5;
@@ -240,7 +249,14 @@ p {
 }
 
 .hero-annotation,
-.section-tag,
+.section-tag {
+  font-family: var(--body);
+  font-size: 0.78rem;
+  font-style: italic;
+  letter-spacing: 0.025em;
+  line-height: 1.5;
+}
+
 .interior-eyebrow {
   font-family: var(--mono);
   font-size: 0.69rem;
@@ -669,9 +685,14 @@ h2 {
 .chapter-preview {
   position: relative;
   max-width: 34rem;
-  padding: clamp(2rem, 5vw, 3.5rem);
+  padding: 1.5rem 1.75rem;
   border: 1px solid var(--rule);
-  background: var(--white);
+  aspect-ratio: 5 / 3;
+  background:
+    radial-gradient(circle at 18% 22%, rgba(23, 20, 18, 0.025) 0 0.6px, transparent 0.8px),
+    radial-gradient(circle at 74% 66%, rgba(23, 20, 18, 0.02) 0 0.5px, transparent 0.75px),
+    var(--white);
+  background-size: 9px 11px, 13px 15px, auto;
   box-shadow: 0.75rem 0.75rem 0 rgba(23, 20, 18, 0.055);
 }
 
@@ -685,8 +706,21 @@ h2 {
   background: rgba(73, 57, 183, 0.28);
 }
 
+.chapter-preview::after {
+  content: '';
+  position: absolute;
+  top: -0.72rem;
+  left: 1.6rem;
+  width: 7.5rem;
+  height: 0.72rem;
+  border: 1px solid var(--rule);
+  border-bottom: 0;
+  background: var(--white);
+  clip-path: polygon(0 100%, 0 30%, 8% 0, 100% 0, 100% 100%);
+}
+
 .chapter-preview-tag {
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.9rem;
   color: var(--signal);
   font-family: var(--mono);
   font-size: 0.68rem;
@@ -695,10 +729,10 @@ h2 {
 }
 
 .chapter-text {
-  margin-bottom: 1.15rem;
+  margin-bottom: 0.65rem;
   color: var(--text);
-  font-size: 0.96rem;
-  line-height: 1.88;
+  font-size: 0.82rem;
+  line-height: 1.5;
 }
 
 .chapter-fade {
@@ -890,6 +924,14 @@ h2 {
   color: inherit;
 }
 
+.synopsis-details > summary {
+  display: none;
+}
+
+.synopsis-details-body {
+  display: contents;
+}
+
 .pull-quote-col {
   position: sticky;
   top: 7rem;
@@ -910,10 +952,10 @@ h2 {
 
 .pull-attribution {
   color: var(--signal);
-  font-family: var(--mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.075em;
-  text-transform: uppercase;
+  font-family: var(--body);
+  font-size: 0.78rem;
+  font-style: italic;
+  letter-spacing: 0.015em;
 }
 
 hr.section-rule {
@@ -1049,6 +1091,31 @@ hr.section-rule {
   color: var(--paper);
 }
 
+.final-constellation,
+.interior-constellation {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0.14;
+  pointer-events: none;
+}
+
+.final-constellation .constellation,
+.interior-constellation .constellation {
+  z-index: 0;
+  inset: -24% -12% -18% 28%;
+  width: 84%;
+  height: 142%;
+  transform: rotate(-8deg);
+}
+
+.final-constellation .constellation path,
+.final-constellation .constellation circle,
+.interior-constellation .constellation path,
+.interior-constellation .constellation circle {
+  opacity: var(--o);
+}
+
 .final-inner {
   position: relative;
   width: min(100%, 880px);
@@ -1060,10 +1127,10 @@ hr.section-rule {
 .final-eyebrow {
   margin-bottom: 1.5rem;
   color: var(--signal-light);
-  font-family: var(--mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: var(--body);
+  font-size: 0.82rem;
+  font-style: italic;
+  letter-spacing: 0.015em;
 }
 
 .final-headline {
@@ -1096,10 +1163,9 @@ hr.section-rule {
 
 .final-signal-link {
   color: var(--signal-light);
-  font-family: var(--mono);
-  font-size: 0.69rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-family: var(--body);
+  font-size: 0.78rem;
+  letter-spacing: 0.015em;
 }
 
 /* Interior response and policy routes */
@@ -1175,6 +1241,90 @@ hr.section-rule {
   font-size: 0.9em;
 }
 
+.interior-page-confirmation .interior-inner {
+  width: min(100%, 900px);
+}
+
+.interior-page-confirmation .interior-copy {
+  max-width: 64ch;
+}
+
+.interior-page-confirmation .interior-copy p:first-child {
+  max-width: 40ch;
+  color: var(--paper);
+  font-family: var(--display);
+  font-size: clamp(1.65rem, 3.5vw, 2.55rem);
+  line-height: 1.32;
+  text-wrap: balance;
+}
+
+/* Compact social route */
+.chapter-one-landing {
+  position: relative;
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 78% 22%, rgba(227, 176, 107, 0.09), transparent 24rem),
+    var(--night);
+  color: var(--paper);
+}
+
+.chapter-one-wordmark {
+  position: absolute;
+  z-index: 2;
+  top: 1.1rem;
+  left: clamp(1rem, 4vw, 4rem);
+}
+
+.chapter-one-landing-inner {
+  width: min(100%, 980px);
+  padding: 7.5rem 1.5rem 3rem;
+}
+
+.chapter-one-offer {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(1.5rem, 5vw, 3.5rem);
+}
+
+.chapter-one-cover img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.chapter-one-offer h1 {
+  max-width: 15ch;
+  margin-bottom: 0.8rem;
+  font-family: var(--display);
+  font-size: clamp(2.8rem, 6vw, 5.5rem);
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  line-height: 0.94;
+}
+
+.chapter-one-offer p {
+  max-width: 58ch;
+  color: var(--muted-on-dark);
+  line-height: 1.65;
+}
+
+.chapter-one-landing .capture-form {
+  width: min(100%, 42rem);
+  margin-inline: auto;
+}
+
+
+.chapter-one-book-link {
+  display: block;
+  width: max-content;
+  margin: 1rem auto 0;
+  color: var(--signal-light);
+  font-size: 0.82rem;
+}
+
 /* Approved author bio */
 .about-chris {
   border-top: 1px solid var(--rule);
@@ -1221,9 +1371,9 @@ footer {
   padding: 2rem clamp(1.25rem, 4vw, 4rem);
   background: var(--night-deep);
   color: #b9b0a4;
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.035em;
+  font-family: var(--body);
+  font-size: 0.76rem;
+  letter-spacing: 0.01em;
   line-height: 1.6;
 }
 
@@ -1249,8 +1399,7 @@ footer {
 .footer-cta {
   color: var(--signal-light);
   font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 footer nav {
@@ -1316,14 +1465,14 @@ footer a {
     animation: signal-breathe 7s ease-in-out infinite;
   }
 
-  .constellation path {
+  .hero .constellation path {
     stroke-dasharray: 1;
     stroke-dashoffset: 1;
     animation: constellation-draw 1.1s var(--ease-out-ui) both;
     animation-delay: calc(var(--d) * 1s + 0.3s);
   }
 
-  .constellation circle {
+  .hero .constellation circle {
     animation: constellation-node 0.6s ease-out both;
     animation-delay: calc(var(--d) * 1s + 0.3s);
   }
@@ -1377,7 +1526,7 @@ footer a {
   }
 
   .site-nav a {
-    font-size: 0.6rem;
+    font-size: 0.7rem;
   }
 }
 
@@ -1541,8 +1690,8 @@ footer a {
   .hero-annotation {
     max-width: none;
     margin-bottom: 0;
-    font-size: 0.62rem;
-    letter-spacing: 0.08em;
+    font-size: 0.66rem;
+    letter-spacing: 0.015em;
     white-space: nowrap;
   }
 
@@ -1603,6 +1752,110 @@ footer a {
   .author-portrait {
     width: min(72vw, 360px);
   }
+
+  .synopsis-details {
+    margin-top: 1.4rem;
+  }
+
+  .synopsis-details > summary {
+    display: flex;
+    min-height: 2.75rem;
+    width: max-content;
+    align-items: center;
+    color: var(--signal);
+    cursor: pointer;
+    font-size: 0.88rem;
+    font-weight: 700;
+    list-style: none;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.22em;
+  }
+
+  .synopsis-details > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .synopsis-details > summary::after {
+    content: '+';
+    margin-left: 0.65rem;
+    color: var(--gold-deep);
+  }
+
+  .synopsis-details[open] > summary::after {
+    content: '−';
+  }
+
+  .synopsis-details-body {
+    display: block;
+    padding-top: 1.4rem;
+  }
+
+  .synopsis-details:not([data-ready]) .synopsis-details-body {
+    display: none;
+  }
+
+  .chapter-one-landing {
+    place-items: start center;
+  }
+
+  .chapter-one-landing-inner {
+    padding: 3.7rem 1rem 0.5rem;
+  }
+
+  .chapter-one-offer {
+    grid-template-columns: 76px minmax(0, 1fr);
+    align-items: center;
+    gap: 1rem 1.1rem;
+  }
+
+  /* Let the heading sit beside the cover and the offer run full width below. */
+  .chapter-one-offer > div {
+    display: contents;
+  }
+
+  .chapter-one-offer h1 {
+    margin-bottom: 0;
+    font-size: clamp(1.9rem, 8.6vw, 2.35rem);
+    line-height: 0.98;
+  }
+
+  .chapter-one-offer p {
+    grid-column: 1 / -1;
+    font-size: 0.98rem;
+    line-height: 1.6;
+  }
+
+  .chapter-one-landing .capture-form {
+    margin-top: 1.1rem;
+  }
+
+  .chapter-one-landing .capture-field input {
+    min-height: 2.8rem;
+  }
+
+  .chapter-one-landing .capture-form button {
+    width: 100%;
+    min-height: 2.75rem;
+  }
+
+  .chapter-one-landing .capture-consent {
+    margin-top: 0;
+    font-size: 0.62rem;
+    line-height: 1.35;
+  }
+
+  .chapter-one-landing .capture-note,
+  .chapter-one-landing .capture-privacy,
+  .chapter-one-landing .capture-status {
+    font-size: 0.6rem;
+    line-height: 1.3;
+  }
+
+  .chapter-one-book-link {
+    margin-top: 0.2rem;
+    font-size: 0.66rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1620,5 +1873,140 @@ footer a {
 
   .artifact-cursor {
     opacity: 1;
+  }
+}
+
+@media (max-width: 340px) {
+  .chapter-one-landing-inner {
+    padding-top: 3rem;
+    padding-bottom: 0;
+  }
+
+  .chapter-one-offer {
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: 0.7rem;
+  }
+
+  .chapter-one-offer h1 {
+    font-size: 1.48rem;
+  }
+
+  .chapter-one-offer p {
+    font-size: 0.66rem;
+    line-height: 1.32;
+  }
+
+  .chapter-one-landing .capture-consent {
+    font-size: 0.58rem;
+    line-height: 1.28;
+  }
+
+  .chapter-one-landing .capture-form {
+    gap: 0.2rem;
+  }
+
+  .chapter-one-landing .capture-note,
+  .chapter-one-landing .capture-privacy,
+  .chapter-one-landing .capture-status {
+    font-size: 0.56rem;
+    line-height: 1.24;
+  }
+
+  .chapter-one-book-link {
+    margin-top: 0;
+  }
+}
+
+/* Chapter One excerpt as the What This Is bridge (approved 2026-10-20).
+   A page from the book, set on the night band: verbatim v4/v5 text, running
+   head, book indents; T∆RS's typed replies set in the mono face because the
+   chapter describes them as "neat as typed notes". */
+.nowrap {
+  white-space: nowrap;
+}
+
+.book-page {
+  /* Paper context inside the night band: restore the light-ground tokens. */
+  --muted: #625a50;
+  --rule: rgba(23, 20, 18, 0.18);
+  position: relative;
+  max-width: 34rem;
+  margin: 3rem 0 0;
+  padding: 2.4rem clamp(1.5rem, 4vw, 2.75rem) 2.6rem;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow:
+    0 1.6rem 3rem -1.2rem rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(227, 176, 107, 0.25);
+}
+
+.book-page::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 2.2rem;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.07), transparent);
+  pointer-events: none;
+}
+
+.book-page-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 1.6rem;
+  padding-bottom: 0.7rem;
+  border-bottom: 1px solid var(--rule);
+  color: var(--muted);
+  font-family: var(--display);
+  font-size: 0.95rem;
+  font-style: italic;
+  letter-spacing: 0.02em;
+}
+
+.book-page-text {
+  margin: 0;
+}
+
+.what-copy .book-page-text p {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 1rem;
+  line-height: 1.75;
+  text-indent: 1.4em;
+}
+
+.what-copy .book-page-text p:first-child {
+  text-indent: 0;
+}
+
+.book-page-machine {
+  color: var(--amber);
+  font-family: var(--mono);
+  font-size: 0.92rem;
+  letter-spacing: 0.01em;
+}
+
+.book-page-cta {
+  margin-top: 1.75rem;
+}
+
+.what-headline {
+  max-width: 13ch;
+}
+
+/* Interior pages: keep the signal line in the gutter on narrow screens so it
+   never runs through the copy. */
+@media (max-width: 700px) {
+  .interior-signal {
+    left: 0.75rem;
+  }
+}
+
+/* Social landing: align the form with the offer text column on wide screens. */
+@media (min-width: 701px) {
+  .chapter-one-landing .capture-form {
+    margin-left: calc(120px + clamp(1.5rem, 5vw, 3.5rem));
+    margin-right: 0;
   }
 }
