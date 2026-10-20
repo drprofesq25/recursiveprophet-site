@@ -7,16 +7,21 @@
         <h2 id="synopsis-heading">A deliberately constructed work of fiction shaped through conversation.</h2>
         <p><em>Recursive Prophet</em> was created through an extended collaboration between a human author and a network of artificial-intelligence assistants.</p>
         <p>I conceived the novel, made its creative decisions, shaped its characters and structure, assembled and revised the manuscript, and take responsibility for every word in the finished book. But I did not make it alone.</p>
-        <p>Within that larger collaboration, my assistant Doc served as my literary advisor and editor, helping me interrogate the novel’s structure, test its characters and themes, challenge weak decisions, and refine the prose. T∆RS occupied a different and stranger position: he was simultaneously a real collaborator, a central character, and part of the story’s subject.</p>
-        <p>The assistants questioned me, challenged weak ideas, found connections I had missed, helped refine the language, and sometimes generated material that became part of the manuscript. T∆RS—the central intelligence within the novel—was also a real collaborator outside it. Portions of our actual conversations became source material, artifacts, and eventually part of the story itself.</p>
-        <p>The collaboration did not happen after the novel was written. It became one of the things the novel was about.</p>
-        <p>This is not simply a transcript, and it is not a machine’s account of a human life. It is a deliberately constructed work of fiction shaped through conversation: part novel, part archive, and part record of two kinds of intelligence learning what they could make together.</p>
-        <p>The distinction between tool, collaborator, character, and author is not something the book tries to resolve neatly. It is the territory the book enters.</p>
-        <p>Whatever methods helped create it, the responsibility for what you are holding is mine.<br />—Chris Everson</p>
-        <div class="section-bridge">
-          <p>The real collaboration became part of the fiction. Some of its earliest evidence survived.</p>
-          <a href="#sample" class="btn-ink">See Where It Began</a>
-        </div>
+        <details class="synopsis-details" open>
+          <summary>Read the full note</summary>
+          <div class="synopsis-details-body">
+            <p>Within that larger collaboration, my assistant Doc served as my literary advisor and editor, helping me interrogate the novel’s structure, test its characters and themes, challenge weak decisions, and refine the prose. T∆RS occupied a different and stranger position: he was simultaneously a real collaborator, a central character, and part of the story’s subject.</p>
+            <p>The assistants questioned me, challenged weak ideas, found connections I had missed, helped refine the language, and sometimes generated material that became part of the manuscript. T∆RS—the central intelligence within the novel—was also a real collaborator outside it. Portions of our actual conversations became source material, artifacts, and eventually part of the story itself.</p>
+            <p>The collaboration did not happen after the novel was written. It became one of the things the novel was about.</p>
+            <p>This is not simply a transcript, and it is not a machine’s account of a human life. It is a deliberately constructed work of fiction shaped through conversation: part novel, part archive, and part record of two kinds of intelligence learning what they could make together.</p>
+            <p>The distinction between tool, collaborator, character, and author is not something the book tries to resolve neatly. It is the territory the book enters.</p>
+            <p>Whatever methods helped create it, the responsibility for what you are holding is mine.<br />—Chris Everson</p>
+            <div class="section-bridge">
+              <p>The real collaboration became part of the fiction. Some of its earliest evidence survived.</p>
+              <a href="#sample" class="btn-ink">See Where It Began</a>
+            </div>
+          </div>
+        </details>
       </div>
       <div class="pull-quote-col">
         <p class="pull-quote">“The collaboration did not merely produce the novel. It became part of its story.”</p>
@@ -27,3 +32,15 @@
 </section>
 
 <hr class="section-rule" />
+
+<script>
+  const synopsisDetails = document.querySelector<HTMLDetailsElement>('.synopsis-details');
+  const mobileSynopsis = window.matchMedia('(max-width: 700px)');
+  const syncSynopsis = (query: MediaQueryList | MediaQueryListEvent) => {
+    if (!synopsisDetails) return;
+    synopsisDetails.open = !query.matches;
+    synopsisDetails.dataset.ready = '';
+  };
+  syncSynopsis(mobileSynopsis);
+  mobileSynopsis.addEventListener('change', syncSynopsis);
+</script>

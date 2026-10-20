@@ -415,6 +415,29 @@ const homeContract = await homePage.evaluate(() => {
       const node = document.querySelector('.thread-node-works')?.getBoundingClientRect();
       return thread && node ? Math.abs((thread.left + thread.width / 2) - (node.left + node.width / 2)) : Infinity;
     })(),
+    quietChrome: (() => {
+      const nav = document.querySelector('.site-nav a:not(.nav-cta)');
+      const sectionTag = document.querySelector('.section-tag');
+      if (!nav || !sectionTag) return false;
+      const navStyle = getComputedStyle(nav);
+      const tagStyle = getComputedStyle(sectionTag);
+      return !/DM Mono/i.test(navStyle.fontFamily) && navStyle.textTransform === 'none' &&
+        !/DM Mono/i.test(tagStyle.fontFamily) && tagStyle.textTransform === 'none';
+    })(),
+    sampleArtifact: (() => {
+      const card = document.querySelector('.chapter-preview');
+      if (!card) return false;
+      const rect = card.getBoundingClientRect();
+      const tab = getComputedStyle(card, '::after');
+      return Math.abs((rect.width / rect.height) - (5 / 3)) < 0.25 &&
+        Number.parseFloat(tab.height) > 0 && tab.content !== 'none';
+    })(),
+    viewTransitions: getComputedStyle(document.querySelector('.wordmark')).viewTransitionName === 'site-wordmark' &&
+      getComputedStyle(document.querySelector('.signal-line')).viewTransitionName === 'signal-thread',
+    desktopSynopsisOpen: document.querySelector('.synopsis-details')?.hasAttribute('open') === true &&
+      getComputedStyle(document.querySelector('.synopsis-details > summary')).display === 'none',
+    constellationBookends: document.querySelectorAll('.constellation').length === 2 &&
+      getComputedStyle(document.querySelector('.final-constellation .constellation path')).animationName === 'none',
   };
 });
 
@@ -477,6 +500,11 @@ const homeChecks = {
     homeContract.whatHeadingPosition === 'sticky' && stickyState !== null &&
     Math.abs(stickyState.actualTop - stickyState.expectedTop) <= 1,
   worksNodeOnThread: homeContract.worksNodeDelta <= 1,
+  quietChrome: homeContract.quietChrome,
+  sampleArtifact: homeContract.sampleArtifact,
+  crossDocumentViewTransitions: homeContract.viewTransitions,
+  desktopSynopsisUnfolded: homeContract.desktopSynopsisOpen,
+  staticFinalConstellation: homeContract.constellationBookends,
   twoCaptureForms: homeContract.formCount === 2,
   captureFormsMatchMaster: homeContract.formsValid,
   sectionBridgesTargetForm: homeContract.allBridgesTargetForm,
@@ -510,6 +538,79 @@ for (const [name, passed] of Object.entries(homeChecks)) {
   console.log(`  ${passed ? 'PASS' : 'FAIL'} ${name}`);
 }
 await homeCtx.close();
+
+// --- batch 2: mobile fold and compact social landing route ---
+const foldCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+const foldPage = await foldCtx.newPage();
+await foldPage.goto(URL_, { waitUntil: 'load' });
+const mobileSynopsisFolded = await foldPage.evaluate(() => {
+  const details = document.querySelector('.synopsis-details');
+  const summary = document.querySelector('.synopsis-details > summary');
+  return details instanceof HTMLDetailsElement && !details.open &&
+    summary instanceof HTMLElement && getComputedStyle(summary).display !== 'none' &&
+    summary.textContent?.trim() === 'Read the full note';
+});
+if (!mobileSynopsisFolded) contractFailures++;
+console.log(`\n=== batch 2 responsive contracts ===`);
+console.log(`  ${mobileSynopsisFolded ? 'PASS' : 'FAIL'} mobileSynopsisFolded`);
+await foldCtx.close();
+
+const socialExpectedConsent = 'Enter your email and confirm your address to receive Chapter One and an invitation to the Archive, followed the next day by the first preserved conversation between Chris Everson and T∆RS. You’ll also receive occasional emails from Chris about Recursive Prophet—including book news, selected artifacts, and transmissions from the Archive—and you can unsubscribe at any time.';
+for (const vp of VIEWPORTS.filter(({ width }) => width <= 390)) {
+  const socialCtx = await browser.newContext({ viewport: { width: vp.width, height: vp.height } });
+  const socialPage = await socialCtx.newPage();
+  const socialResponse = await socialPage.goto(new URL('/chapter-one/', URL_).href, { waitUntil: 'load' });
+  await socialPage.evaluate(() => document.fonts.ready);
+  await socialPage.addScriptTag({ content: axeSource });
+  const socialAxe = await socialPage.evaluate(async () => await window.axe.run(document, { resultTypes: ['violations'] }));
+  for (const violation of socialAxe.violations.filter((v) => ['serious', 'critical'].includes(v.impact))) {
+    serious.add(violation.id);
+  }
+  const socialState = await socialPage.evaluate(() => {
+    const normalized = (value) => value.replace(/\s+/g, ' ').trim();
+    const form = document.querySelector('form[data-capture-form]');
+    const link = document.querySelector('.chapter-one-book-link');
+    return {
+      robots: document.querySelector('meta[name="robots"]')?.getAttribute('content') ?? '',
+      canonical: document.querySelector('link[rel="canonical"]')?.getAttribute('href') ?? '',
+      heading: normalized(document.querySelector('main h1')?.textContent ?? ''),
+      offer: normalized(document.querySelector('.chapter-one-offer p')?.textContent ?? ''),
+      consent: normalized(form?.querySelector('.capture-consent')?.textContent ?? ''),
+      privacyText: form?.querySelector('.capture-privacy a')?.textContent?.trim() ?? '',
+      privacyHref: form?.querySelector('.capture-privacy a')?.getAttribute('href') ?? '',
+      button: form?.querySelector('button')?.textContent?.trim() ?? '',
+      withinFirstScreen: Boolean(link && link.getBoundingClientRect().bottom <= innerHeight),
+      noOverflow: document.documentElement.scrollWidth <= innerWidth,
+      targetSizes: [...document.querySelectorAll('.capture-field input, form button')]
+        .every((element) => element.getBoundingClientRect().height >= 44),
+    };
+  });
+  const socialChecks = {
+    status: socialResponse?.status() === 200,
+    noIndex: socialState.robots.split(',').map((value) => value.trim()).includes('noindex'),
+    canonicalHome: socialState.canonical === 'https://recursiveprophet.com/',
+    approvedHeadline: socialState.heading === 'He built the Network to help him become the fullest version of himself.',
+    approvedOffer: socialState.offer === 'Enter your email to receive Chapter One of Recursive Prophet, along with an invitation to the Archive—the first artifact from the world surrounding the novel.',
+    approvedConsent: socialState.consent === socialExpectedConsent,
+    approvedForm: socialState.privacyText === 'Email-list privacy' &&
+      socialState.privacyHref === '/privacy/' && socialState.button === 'Send Me Chapter One',
+    firstScreen: socialState.withinFirstScreen,
+    noOverflow: socialState.noOverflow,
+    targetSizes: socialState.targetSizes,
+    axe: socialAxe.violations.filter((v) => ['serious', 'critical'].includes(v.impact)).length === 0,
+  };
+  for (const [name, passed] of Object.entries(socialChecks)) {
+    if (!passed) contractFailures++;
+    console.log(`  ${passed ? 'PASS' : 'FAIL'} /chapter-one/ ${vp.width}px ${name}`);
+  }
+  await socialPage.screenshot({ path: join(OUT, `chapter-one-${vp.label}.png`) });
+  await socialCtx.close();
+}
+
+const socialSitemap = readFileSync(join(DIST, 'sitemap-0.xml'), 'utf8');
+const socialLandingExcluded = !/<loc>[^<]*\/chapter-one\/<\/loc>/.test(socialSitemap);
+if (!socialLandingExcluded) contractFailures++;
+console.log(`  ${socialLandingExcluded ? 'PASS' : 'FAIL'} /chapter-one/ excludedFromSitemap`);
 
 // --- transactional route contracts: honest actions and no search indexing ---
 const routeCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
@@ -545,6 +646,10 @@ for (const contract of routeContracts) {
       heading: document.querySelector('main h1')?.textContent?.trim() ?? '',
       actionText: action?.textContent?.trim() ?? '',
       actionHref: action?.getAttribute('href') ?? '',
+      constellationCount: document.querySelectorAll('.interior-constellation .constellation').length,
+      signalTransition: getComputedStyle(document.querySelector('.interior-signal')).viewTransitionName,
+      leadSize: Number.parseFloat(getComputedStyle(document.querySelector('.interior-copy p:first-child')).fontSize),
+      background: getComputedStyle(document.querySelector('.interior-page')).backgroundColor,
     };
   });
   const checks = {
@@ -553,6 +658,10 @@ for (const contract of routeContracts) {
     heading: state.heading === contract.heading,
     actionText: state.actionText === contract.actionText,
     actionHref: state.actionHref === contract.actionHref,
+    staticConstellation: state.constellationCount === 1,
+    coverNight: state.background === 'rgb(10, 24, 40)',
+    signalViewTransition: state.signalTransition === 'signal-thread',
+    requestedActionDominant: contract.path !== '/chapter-one/requested/' || state.leadSize >= 24,
   };
   for (const [name, passed] of Object.entries(checks)) {
     if (!passed) contractFailures++;
@@ -597,6 +706,8 @@ const missingState = await missingPage.evaluate(() => {
     text: document.querySelector('main .interior-copy')?.textContent?.replace(/\s+/g, ' ').trim() ?? '',
     actionText: action?.textContent?.trim() ?? '',
     actionHref: action?.getAttribute('href') ?? '',
+    constellationCount: document.querySelectorAll('.interior-constellation .constellation').length,
+    background: getComputedStyle(document.querySelector('.interior-page')).backgroundColor,
   };
 });
 const missingChecks = {
@@ -606,6 +717,8 @@ const missingChecks = {
   approvedCopy: missingState.text === 'The Network remembers many things. Apparently, this was not one of them.',
   actionText: missingState.actionText === 'Return to the Book',
   actionHref: missingState.actionHref === '/#book',
+  coverNightWithConstellation: missingState.background === 'rgb(10, 24, 40)' &&
+    missingState.constellationCount === 1,
 };
 console.log('\n=== missing-page contract ===');
 for (const [name, passed] of Object.entries(missingChecks)) {
@@ -639,6 +752,8 @@ const privacyState = await privacyPage.evaluate(() => {
     hasProviderScope: text.includes('MailerLite processes subscriber information'),
     hasRights: [...document.querySelectorAll('main h2')]
       .some((heading) => heading.textContent?.trim() === 'Your choices'),
+    constellationCount: document.querySelectorAll('.interior-constellation .constellation').length,
+    background: getComputedStyle(document.querySelector('.interior-page')).backgroundColor,
   };
 });
 const privacyChecks = {
@@ -648,6 +763,8 @@ const privacyChecks = {
   consentVersion: privacyState.hasConsentVersion,
   providerScope: privacyState.hasProviderScope,
   rightsSection: privacyState.hasRights,
+  coverNightWithConstellation: privacyState.background === 'rgb(10, 24, 40)' &&
+    privacyState.constellationCount === 1,
 };
 console.log('\n=== privacy notice contract ===');
 for (const [name, passed] of Object.entries(privacyChecks)) {

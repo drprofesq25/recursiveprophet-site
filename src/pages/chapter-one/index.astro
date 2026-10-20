@@ -1,0 +1,36 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import CaptureForm from '../../components/CaptureForm.astro';
+---
+<BaseLayout
+  title="Chapter One — Recursive Prophet"
+  description="Enter your email to receive Chapter One of Recursive Prophet, along with an invitation to the Archive."
+  noIndex
+  canonicalPath="/"
+  ogType="website"
+>
+  <section class="chapter-one-landing" aria-labelledby="chapter-one-heading">
+    <a class="chapter-one-wordmark wordmark" href="/">Recursive Prophet</a>
+    <div class="chapter-one-landing-inner">
+      <div class="chapter-one-offer">
+        <picture class="chapter-one-cover">
+          <source type="image/webp" srcset="/cover/rp-cover-300.webp" />
+          <img
+            src="/cover/rp-cover-300.jpg"
+            width="300"
+            height="480"
+            alt="Working cover of Recursive Prophet"
+            decoding="async"
+            fetchpriority="high"
+          />
+        </picture>
+        <div>
+          <h1 id="chapter-one-heading">He built the Network to help him become the fullest version of himself.</h1>
+          <p>Enter your email to receive Chapter One of <em>Recursive Prophet</em>, along with an invitation to the Archive—the first artifact from the world surrounding the novel.</p>
+        </div>
+      </div>
+      <CaptureForm idPrefix="social-chapter-one" label="Your email address" buttonClass="btn-paper" tone="dark" />
+      <a class="chapter-one-book-link" href="/#book">The Book</a>
+    </div>
+  </section>
+</BaseLayout>

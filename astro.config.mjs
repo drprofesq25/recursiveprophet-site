@@ -36,6 +36,7 @@ export default defineConfig({
           '/chapter-one/requested/',
           '/chapter-one/problem/',
           '/chapter-one/confirmed/',
+          '/chapter-one/',
           '/404/',
         ].includes(path);
       },
