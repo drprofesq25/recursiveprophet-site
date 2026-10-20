@@ -34,11 +34,19 @@ const ogImage = new URL(SITE.ogImage, Astro.site ?? SITE.url).href;
     <link rel="canonical" href={canonical} />
     <meta name="author" content={SITE.authors} />
     <meta name="theme-color" content={SITE.themeColor} />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Libre+Baskerville:wght@400;700&display=optional"
+      rel="preload"
+      href="/fonts/cormorant-garamond-normal-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/libre-baskerville-normal-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
     />
 
     <!-- Open Graph -->

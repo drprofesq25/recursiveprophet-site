@@ -21,7 +21,7 @@ import { readFile as read } from 'node:fs/promises';
 import { mkdirSync } from 'node:fs';
 import { join, extname, resolve } from 'node:path';
 
-const STRICT = process.argv.includes('--strict');
+const STRICT = process.argv.includes('--strict') || process.env.npm_config_strict === 'true';
 const DIST = resolve('dist');
 const OUT = resolve('.audit');
 const PORT = 8099 + Math.floor(process.pid % 500);
@@ -43,7 +43,7 @@ try {
 
 const MIME = { '.html':'text/html', '.css':'text/css', '.js':'text/javascript', '.json':'application/json',
   '.svg':'image/svg+xml', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.png':'image/png',
-  '.webp':'image/webp', '.xml':'application/xml', '.ico':'image/x-icon' };
+  '.webp':'image/webp', '.woff2':'font/woff2', '.xml':'application/xml', '.ico':'image/x-icon' };
 
 const server = createServer((req, res) => {
   let p = decodeURIComponent(req.url.split('?')[0]);
@@ -107,12 +107,15 @@ for (const vp of VIEWPORTS) {
   const page = await ctx.newPage();
   let requests = 0;
   const bodies = [];
+  const requestUrls = [];
+  page.on('request', (request) => requestUrls.push(request.url()));
   page.on('response', (r) => {
     requests++;
     bodies.push(r.body().then((b) => b.length).catch(() => 0));
   });
 
   await page.goto(URL_, { waitUntil: 'load' });
+  await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(600);
   await page.addScriptTag({ content: axeSource });
   const results = await page.evaluate(async () => await window.axe.run(document, { resultTypes: ['violations'] }));
@@ -131,8 +134,33 @@ for (const vp of VIEWPORTS) {
   });
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
   const nodes = await page.evaluate(() => document.getElementsByTagName('*').length);
+  const fontState = await page.evaluate(() => ({
+    display: document.fonts.check('400 48px "Cormorant Garamond"'),
+    displaySemibold: document.fonts.check('600 24px "Cormorant Garamond"'),
+    body: document.fonts.check('400 16px "Libre Baskerville"'),
+    bodyBold: document.fonts.check('700 16px "Libre Baskerville"'),
+    bodyItalic: document.fonts.check('italic 400 16px "Libre Baskerville"'),
+    mono: document.fonts.check('400 12px "DM Mono"'),
+  }));
+  const mobileHero = vp.label === 'mobile' ? await page.evaluate(() => {
+    const compact = document.querySelector('.hero-cover-compact');
+    const buttons = document.querySelector('.hero-btns');
+    const compactRect = compact?.getBoundingClientRect();
+    const buttonsRect = buttons?.getBoundingClientRect();
+    return {
+      compactVisible: Boolean(compactRect && compactRect.width >= 96 && compactRect.bottom <= innerHeight),
+      buttonsAboveFold: Boolean(buttonsRect && buttonsRect.bottom <= innerHeight),
+    };
+  }) : null;
 
-  await page.screenshot({ path: join(OUT, `${vp.label}.png`), fullPage: true });
+  await page.screenshot({ path: join(OUT, `home-${vp.label}-first-viewport-cold.png`) });
+  for (const image of await page.locator('img[loading="lazy"]').all()) {
+    await image.scrollIntoViewIfNeeded();
+    await image.evaluate(async (element) => {
+      if (element instanceof HTMLImageElement) await element.decode();
+    });
+  }
+  await page.screenshot({ path: join(OUT, `home-${vp.label}-cold.png`), fullPage: true });
 
   // Await every pending body before totalling -- reading the accumulator early
   // under-reports by however many responses are still in flight.
@@ -145,6 +173,18 @@ for (const vp of VIEWPORTS) {
   console.log(`  CLS ${cls}   horizontal overflow: ${overflow ? 'YES -- investigate' : 'none'}`);
   if (img) console.log(`  cover negotiated: ${img.src} rendered at ${img.rendered}px`);
   console.log(`  axe violations: ${results.violations.length}`);
+  const externalFonts = requestUrls.filter((url) => /fonts\.(?:googleapis|gstatic)\.com/i.test(url));
+  const fontChecksPass = Object.values(fontState).every(Boolean);
+  if (!fontChecksPass) contractFailures++;
+  if (externalFonts.length) contractFailures++;
+  console.log(`  ${fontChecksPass ? 'PASS' : 'FAIL'} cold-cache webfonts loaded`);
+  console.log(`  ${externalFonts.length === 0 ? 'PASS' : 'FAIL'} no Google font requests`);
+  if (mobileHero) {
+    for (const [name, passed] of Object.entries(mobileHero)) {
+      if (!passed) contractFailures++;
+      console.log(`  ${passed ? 'PASS' : 'FAIL'} mobileHero.${name}`);
+    }
+  }
   for (const v of results.violations) {
     console.log(`    [${v.impact}] ${v.id} -- ${v.nodes.length} node(s): ${v.help}`);
     if (v.impact === 'serious' || v.impact === 'critical') serious.add(v.id);
@@ -175,14 +215,24 @@ const reducedPage = await reducedCtx.newPage();
 await reducedPage.goto(URL_, { waitUntil: 'load' });
 const reducedState = await reducedPage.evaluate(() => {
   const signal = document.querySelector('.signal-line');
+  const constellation = document.querySelector('.constellation path');
+  const thread = document.querySelector('.thread');
+  const cursor = document.querySelector('.artifact-cursor');
   return {
     scrollBehavior: getComputedStyle(document.documentElement).scrollBehavior,
     signalAnimation: signal ? getComputedStyle(signal).animationName : '',
+    constellationAnimation: constellation ? getComputedStyle(constellation).animationName : '',
+    threadAnimation: thread ? getComputedStyle(thread, '::after').animationName : '',
+    cursorAnimation: cursor ? getComputedStyle(cursor).animationName : '',
+    threadVisible: document.querySelector('.thread') !== null,
   };
 });
 const reducedChecks = {
   smoothScrollDisabled: reducedState.scrollBehavior === 'auto',
   decorativeLoopDisabled: reducedState.signalAnimation === 'none',
+  constellationStatic: reducedState.constellationAnimation === 'none',
+  threadStaticAndVisible: reducedState.threadVisible && reducedState.threadAnimation === 'none',
+  cursorBlinkDisabled: reducedState.cursorAnimation === 'none',
 };
 console.log('\n=== reduced motion ===');
 for (const [name, passed] of Object.entries(reducedChecks)) {
@@ -237,6 +287,10 @@ for (const [ex, n] of Object.entries(inv.byExt).sort((a, b) => b[1] - a[1]))
   console.log(`  ${ex.padEnd(7)} ${String(Math.round(n / 1024)).padStart(5)} KB`);
 console.log(`  ${'TOTAL'.padEnd(7)} ${String(Math.round(inv.total / 1024)).padStart(5)} KB on disk`);
 console.log('  note: the cover ships in 6 renditions; any single visitor fetches one.');
+const fontBytes = inv.byExt['.woff2'] ?? 0;
+const fontBudgetPasses = fontBytes <= 220 * 1024;
+if (!fontBudgetPasses) contractFailures++;
+console.log(`  ${fontBudgetPasses ? 'PASS' : 'FAIL'} font payload ${Math.round(fontBytes / 1024)} KB / 220 KB`);
 
 // --- keyboard operability of the FAQ disclosure widgets ---
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
@@ -290,6 +344,9 @@ const homeContract = await homePage.evaluate(() => {
     ogImageHeight: document.querySelector('meta[property="og:image:height"]')?.getAttribute('content') ?? '',
     twitterCard: document.querySelector('meta[name="twitter:card"]')?.getAttribute('content') ?? '',
     twitterImage: document.querySelector('meta[name="twitter:image"]')?.getAttribute('content') ?? '',
+    fontPreloads: document.querySelectorAll('link[rel="preload"][as="font"]').length,
+    googleFontLinks: [...document.querySelectorAll('link')]
+      .filter((link) => /fonts\.(?:googleapis|gstatic)\.com/i.test(link.href)).length,
     structuredData: (() => {
       try {
         return JSON.parse(document.querySelector('script[type="application/ld+json"]')?.textContent ?? 'null');
@@ -317,6 +374,8 @@ const homeContract = await homePage.evaluate(() => {
     hasRetiredFirstFile: /First File|Open the First File/i.test(text),
     hasStaleDate: text.includes('September 13, 2026'),
     hasOldUnverifiedExcerpt: text.includes('He had told the system everything'),
+    footerByline: normalized(document.querySelector('.footer-brand span')?.textContent ?? ''),
+    coverByline: normalized(document.querySelector('.file-annotation > span:last-child')?.textContent ?? ''),
   };
 });
 
@@ -330,7 +389,7 @@ const socialCardAsset = await homePage.evaluate(async () => {
 });
 
 const homeChecks = {
-  pageTitle: homeContract.title === 'Recursive Prophet — A Speculative Novel by Chris Everson',
+  pageTitle: homeContract.title === 'Recursive Prophet — A Speculative Novel by Chris Everson and D☉C',
   metaDescription: homeContract.description === 'A restless creator builds a Network of AI assistants to become his most complete self. The system works, but the line between assistance and authorship blurs.',
   socialTitle: homeContract.ogTitle === 'He Built the Network. It Began Shaping Him in Return.',
   socialDescription: homeContract.ogDescription === 'An intimate speculative novel about personal identity, creative ownership, and what remains ours when the tools that expand our lives begin shaping them.',
@@ -339,10 +398,15 @@ const homeChecks = {
   socialCardAssetDimensions: socialCardAsset?.width === 1200 && socialCardAsset?.height === 630,
   socialCardSharedAcrossMetadata: homeContract.twitterCard === 'summary_large_image' &&
     homeContract.twitterImage === homeContract.ogImage,
+  maxTwoFontPreloads: homeContract.fontPreloads <= 2,
+  noGoogleFontLinks: homeContract.googleFontLinks === 0,
   bookStructuredData: homeContract.structuredData?.['@type'] === 'Book' &&
     homeContract.structuredData?.name === 'Recursive Prophet' &&
     homeContract.structuredData?.author?.name === 'Chris Everson' &&
     homeContract.structuredData?.publisher?.name === 'The Bindery',
+  approvedVisibleBylines: homeContract.footerByline ===
+    'An intimate speculative novel by Chris Everson and D☉C.' &&
+    homeContract.coverByline === 'Recursive Prophet · Chris Everson and D☉C',
   twoCaptureForms: homeContract.formCount === 2,
   captureFormsMatchMaster: homeContract.formsValid,
   sectionBridgesTargetForm: homeContract.allBridgesTargetForm,

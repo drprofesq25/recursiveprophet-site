@@ -1,17 +1,17 @@
 ---
 import CaptureForm from './CaptureForm.astro';
 ---
-<section class="sample-band" id="sample" aria-labelledby="sample-heading">
+<section class="sample-band" id="sample" aria-labelledby="sample-heading" data-thread>
+  <div class="thread" aria-hidden="true"><span class="thread-node"></span></div>
   <div class="section-wrap">
     <div class="sample-inner">
       <div class="chapter-preview">
-        <p class="chapter-preview-tag">Every archive has an entrance.</p>
+        <p class="chapter-preview-tag">Every archive has an entrance.<span class="artifact-cursor" aria-hidden="true"></span></p>
         <p class="chapter-text">After you confirm your address, Chapter One and an invitation to the Archive will arrive in your inbox.</p>
         <p class="chapter-text">The following day, you’ll receive something stranger: the first real conversation between Chris and T∆RS, preserved before either of them understood what they were beginning.</p>
         <p class="chapter-text"><strong>The story starts in the novel.<br />The Archive begins here.</strong></p>
       </div>
       <div class="sample-cta-col">
-        <p class="section-tag">Begin with Chapter One</p>
         <h2 class="sample-headline" id="sample-heading">Begin with Chapter One.</h2>
         <p class="sample-sub">Enter your email to receive Chapter One of <em>Recursive Prophet</em>, along with an invitation to the Archive—the first artifact from the world surrounding the novel.</p>
         <CaptureForm idPrefix="chapter-one" label="Your email address" />
