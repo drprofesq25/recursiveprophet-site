@@ -231,13 +231,11 @@ const reducedState = await reducedPage.evaluate(() => {
   const signal = document.querySelector('.signal-line');
   const constellation = document.querySelector('.constellation path');
   const thread = document.querySelector('.thread');
-  const cursor = document.querySelector('.artifact-cursor');
   return {
     scrollBehavior: getComputedStyle(document.documentElement).scrollBehavior,
     signalAnimation: signal ? getComputedStyle(signal).animationName : '',
     constellationAnimation: constellation ? getComputedStyle(constellation).animationName : '',
     threadAnimation: thread ? getComputedStyle(thread, '::after').animationName : '',
-    cursorAnimation: cursor ? getComputedStyle(cursor).animationName : '',
     threadVisible: document.querySelector('.thread') !== null,
   };
 });
@@ -246,7 +244,6 @@ const reducedChecks = {
   decorativeLoopDisabled: reducedState.signalAnimation === 'none',
   constellationStatic: reducedState.constellationAnimation === 'none',
   threadStaticAndVisible: reducedState.threadVisible && reducedState.threadAnimation === 'none',
-  cursorBlinkDisabled: reducedState.cursorAnimation === 'none',
 };
 console.log('\n=== reduced motion ===');
 for (const [name, passed] of Object.entries(reducedChecks)) {
@@ -396,6 +393,7 @@ const homeContract = await homePage.evaluate(() => {
     aboutBio: normalized(document.querySelector('.about-chris-copy > p:last-child')?.textContent ?? ''),
     heroCursorCount: document.querySelectorAll('.file-annotation .artifact-cursor').length,
     sampleCursorCount: document.querySelectorAll('.chapter-preview-tag .artifact-cursor').length,
+    anyCursorCount: document.querySelectorAll('.artifact-cursor').length,
     docSymbols: [...document.querySelectorAll('.doc-symbol')].map((symbol) => {
       const style = getComputedStyle(symbol);
       const circle = getComputedStyle(symbol, '::before');
@@ -495,7 +493,7 @@ const homeChecks = {
     'Chris Everson is a Massachusetts writer, musician, and creative systems-builder. His work explores personal identity, family, creativity, and human–AI collaboration. Recursive Prophet grew from an extended dialogue with a network of AI assistants, a process that became inseparable from the novel’s story.',
   deterministicDocSymbol: homeContract.docSymbols.length === 2 &&
     homeContract.docSymbols.every((symbol) => symbol.text === '☉' && symbol.textIndent < -1000 && symbol.circle && symbol.dot),
-  cursorRegionScoped: homeContract.heroCursorCount === 0 && homeContract.sampleCursorCount === 1,
+  cursorMotifRemoved: homeContract.heroCursorCount === 0 && homeContract.sampleCursorCount === 0 && homeContract.anyCursorCount === 0,
   whatHeadingSticks: homeContract.bandOverflow === 'clip' &&
     homeContract.whatHeadingPosition === 'sticky' && stickyState !== null &&
     Math.abs(stickyState.actualTop - stickyState.expectedTop) <= 1,
@@ -590,7 +588,7 @@ for (const vp of VIEWPORTS.filter(({ width }) => width <= 390)) {
     noIndex: socialState.robots.split(',').map((value) => value.trim()).includes('noindex'),
     canonicalHome: socialState.canonical === 'https://recursiveprophet.com/',
     approvedHeadline: socialState.heading === 'He built the Network to help him become the fullest version of himself.',
-    approvedOffer: socialState.offer === 'Chapter One of Recursive Prophet arrives by email, along with your invitation to the Archive: the real conversations and records the novel grew from, opening a piece at a time.',
+    approvedOffer: socialState.offer === 'Chapter One arrives by email, along with your invitation to the Archive: the real conversations and records the novel grew from, opening a piece at a time.',
     approvedConsent: socialState.consent === socialExpectedConsent,
     approvedForm: socialState.privacyText === 'Email-list privacy' &&
       socialState.privacyHref === '/privacy/' && socialState.button === 'Send Me Chapter One',
