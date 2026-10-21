@@ -485,7 +485,7 @@ const homeChecks = {
   bookStructuredData: homeContract.structuredData?.['@type'] === 'Book' &&
     homeContract.structuredData?.name === 'Recursive Prophet' &&
     homeContract.structuredData?.author?.name === 'Chris Everson' &&
-    homeContract.structuredData?.publisher?.name === 'The Bindery',
+    homeContract.structuredData?.publisher === undefined,
   approvedVisibleBylines: homeContract.footerByline ===
     'An intimate novel by Chris Everson and D☉C.' &&
     homeContract.coverByline === 'Recursive Prophet · Chris Everson and D☉C',
