@@ -237,6 +237,8 @@ const reducedState = await reducedPage.evaluate(() => {
     constellationAnimation: constellation ? getComputedStyle(constellation).animationName : '',
     threadAnimation: thread ? getComputedStyle(thread, '::after').animationName : '',
     threadVisible: document.querySelector('.thread') !== null,
+    motionReady: document.documentElement.classList.contains('motion-ready'),
+    machineTextVisible: [...document.querySelectorAll('.book-page-machine')].every((el) => getComputedStyle(el).opacity === '1' && el.textContent.trim().length > 0),
   };
 });
 const reducedChecks = {
@@ -244,6 +246,7 @@ const reducedChecks = {
   decorativeLoopDisabled: reducedState.signalAnimation === 'none',
   constellationStatic: reducedState.constellationAnimation === 'none',
   threadStaticAndVisible: reducedState.threadVisible && reducedState.threadAnimation === 'none',
+  revealsOff: !reducedState.motionReady && reducedState.machineTextVisible,
 };
 console.log('\n=== reduced motion ===');
 for (const [name, passed] of Object.entries(reducedChecks)) {
