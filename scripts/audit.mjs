@@ -487,7 +487,7 @@ const homeChecks = {
     homeContract.structuredData?.author?.name === 'Chris Everson' &&
     homeContract.structuredData?.publisher === undefined,
   approvedVisibleBylines: homeContract.footerByline ===
-    'A novel by Chris Everson and D☉C.' &&
+    'A novel by Chris Everson and D☉C' &&
     homeContract.coverByline === '',
   approvedHeroCopy: homeContract.heroAnnotation === 'Recursive Prophet · A novel' &&
     homeContract.heroSupportingLine === 'Then it began shaping him in return.' &&

@@ -404,6 +404,24 @@ p {
   transform-origin: center;
 }
 
+.constellation text {
+  fill: currentColor;
+  opacity: var(--o);
+  font-family: var(--mono);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  paint-order: stroke;
+  stroke: var(--night-deep);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+
+@media (max-width: 700px) {
+  .constellation text {
+    display: none;
+  }
+}
+
 /* Bridges from real cover nodes across the cover edge sit in front of the cover image. */
 .constellation.constellation-front {
   z-index: 1;
@@ -1524,7 +1542,8 @@ footer a {
     animation-delay: calc(var(--d) * 1s + 0.3s);
   }
 
-  .hero .constellation circle {
+  .hero .constellation circle,
+  .hero .constellation text {
     animation: constellation-node 0.6s ease-out both;
     animation-delay: calc(var(--d) * 1s + 0.3s);
   }
@@ -1556,7 +1575,8 @@ footer a {
   stroke-dashoffset: 1;
 }
 
-.motion-ready .final-section .constellation circle {
+.motion-ready .final-section .constellation circle,
+.motion-ready .final-section .constellation text {
   opacity: 0;
 }
 
@@ -1565,7 +1585,8 @@ footer a {
   animation-delay: calc(var(--d) * 1.2s + 0.15s);
 }
 
-.motion-ready .final-section.is-in .constellation circle {
+.motion-ready .final-section.is-in .constellation circle,
+.motion-ready .final-section.is-in .constellation text {
   animation: constellation-node 0.7s ease-out both;
   animation-delay: calc(var(--d) * 1.2s + 0.15s);
 }
