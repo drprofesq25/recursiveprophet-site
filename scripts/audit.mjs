@@ -437,7 +437,7 @@ const homeContract = await homePage.evaluate(() => {
       getComputedStyle(document.querySelector('.signal-line')).viewTransitionName === 'signal-thread',
     desktopSynopsisOpen: document.querySelector('.synopsis-details')?.hasAttribute('open') === true &&
       getComputedStyle(document.querySelector('.synopsis-details > summary')).display === 'none',
-    constellationBookends: document.querySelectorAll('.constellation').length === 2 &&
+    constellationBookends: document.querySelectorAll('.hero .constellation').length === 2 && document.querySelectorAll('.final-constellation .constellation').length === 1 &&
       getComputedStyle(document.querySelector('.final-constellation .constellation path')).animationName === 'none',
   };
 });

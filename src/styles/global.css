@@ -404,6 +404,11 @@ p {
   transform-origin: center;
 }
 
+/* Bridges from real cover nodes across the cover edge sit in front of the cover image. */
+.constellation.constellation-front {
+  z-index: 1;
+}
+
 .constellation .ring {
   fill: none;
   stroke: currentColor;
