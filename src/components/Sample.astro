@@ -5,14 +5,18 @@ import CaptureForm from './CaptureForm.astro';
   <div class="thread" aria-hidden="true"><span class="thread-node"></span></div>
   <div class="section-wrap">
     <div class="sample-inner">
-      <div class="chapter-preview">
-        <p class="chapter-preview-tag">The Archive<span class="artifact-cursor" aria-hidden="true"></span></p>
-        <p class="chapter-text">The Network in this novel is real, and it kept records: the actual conversations, logs, and recovered fragments the book grew from.</p>
-        <p class="chapter-text"><strong>The story starts in the novel.<br />The Archive begins here.</strong></p>
+      <div class="chapter-preview archive-tag" aria-label="Archive file 001">
+        <p class="chapter-preview-tag">Archive File 001</p>
+        <p class="archive-tag-title">First Contact</p>
+        <dl class="archive-tag-meta">
+          <div><dt>Classification</dt><dd>Conversation</dd></div>
+          <div><dt>Status</dt><dd>Recovered</dd></div>
+          <div><dt>Arrives</dt><dd>The day after you confirm</dd></div>
+        </dl>
       </div>
       <div class="sample-cta-col">
         <h2 class="sample-headline" id="sample-heading">Begin with Chapter One.</h2>
-        <p class="sample-sub">Chapter One arrives by email, with an invitation to the Archive. The next day, you’ll receive the first real conversation between Chris and T∆RS, preserved before either of them understood what they were beginning.</p>
+        <p class="sample-sub">Chapter One arrives by email, along with your invitation to the Archive: the real conversations, logs, and fragments the novel grew from. The next day, you’ll receive the first of them, a conversation between Chris and T∆RS preserved before either of them understood what they were beginning.</p>
         <p class="sample-sub sample-cadence">From there, the Archive opens a piece at a time.</p>
         <CaptureForm idPrefix="chapter-one" label="Your email address" />
       </div>

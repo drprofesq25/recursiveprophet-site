@@ -590,7 +590,7 @@ for (const vp of VIEWPORTS.filter(({ width }) => width <= 390)) {
     noIndex: socialState.robots.split(',').map((value) => value.trim()).includes('noindex'),
     canonicalHome: socialState.canonical === 'https://recursiveprophet.com/',
     approvedHeadline: socialState.heading === 'He built the Network to help him become the fullest version of himself.',
-    approvedOffer: socialState.offer === 'Chapter One of Recursive Prophet arrives by email, with an invitation to the Archive: the real conversations and records the novel grew from, opening a piece at a time.',
+    approvedOffer: socialState.offer === 'Chapter One of Recursive Prophet arrives by email, along with your invitation to the Archive: the real conversations and records the novel grew from, opening a piece at a time.',
     approvedConsent: socialState.consent === socialExpectedConsent,
     approvedForm: socialState.privacyText === 'Email-list privacy' &&
       socialState.privacyHref === '/privacy/' && socialState.button === 'Send Me Chapter One',
