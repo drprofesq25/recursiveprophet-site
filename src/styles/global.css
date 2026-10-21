@@ -1145,14 +1145,6 @@ hr.section-rule {
   text-align: center;
 }
 
-.final-eyebrow {
-  margin-bottom: 1.5rem;
-  color: var(--signal-light);
-  font-family: var(--body);
-  font-size: 0.82rem;
-  font-style: italic;
-  letter-spacing: 0.015em;
-}
 
 .final-headline {
   margin-bottom: 1.2rem;
