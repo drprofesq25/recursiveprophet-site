@@ -440,17 +440,6 @@ p {
   filter: blur(10px);
 }
 
-.file-annotation {
-  display: grid;
-  max-width: 34rem;
-  gap: 0.35rem;
-  color: var(--muted-on-dark);
-  font-family: var(--mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.06em;
-  line-height: 1.6;
-  text-align: center;
-}
 
 .doc-symbol {
   position: relative;
@@ -934,16 +923,15 @@ h2 {
 
 .section-bridge {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 1.25rem 2rem;
-  margin-top: 2.5rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--rule);
+  gap: 1.5rem;
+  margin-top: clamp(3.5rem, 6vw, 5rem);
+  text-align: center;
 }
 
 .section-bridge p {
-  max-width: 48ch;
+  max-width: 34ch;
   margin: 0;
   color: var(--ink);
   font-family: var(--display);
@@ -1062,10 +1050,13 @@ hr.section-rule {
   line-height: 1.85;
 }
 
-.authorship-note {
-  padding: 1.35rem 0 0 1.5rem;
-  border-top: 1px solid var(--rule);
-  border-left: 2px solid var(--signal);
+.author-copy .authorship-note {
+  margin-top: 1.75rem;
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: clamp(1.3rem, 1.9vw, 1.55rem);
+  font-style: italic;
+  line-height: 1.45;
 }
 
 .readers-label {
@@ -1699,11 +1690,6 @@ footer a {
 
   .site-nav a:not(.nav-cta) {
     display: none;
-  }
-
-  .section-bridge {
-    align-items: flex-start;
-    flex-direction: column;
   }
 
   .footer-actions {
