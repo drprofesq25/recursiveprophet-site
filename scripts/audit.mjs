@@ -493,7 +493,7 @@ const homeChecks = {
     homeContract.heroSupportingLine === 'Then it began shaping him in return.' &&
     homeContract.heroDeck === 'An intimate novel about personal identity and creative ownership in the age of AI.',
   approvedAuthorBio: homeContract.aboutBio ===
-    'Chris Everson is a Massachusetts writer, musician, and creative systems-builder. His work explores personal identity, family, creativity, and human–AI collaboration. Recursive Prophet grew from an extended dialogue with a network of AI assistants, a process that became inseparable from the novel’s story.',
+    'Chris Everson is a writer, musician, and creative systems-builder. His work explores personal identity, family, creativity, and human–AI collaboration. Recursive Prophet grew from an extended dialogue with a network of AI assistants, a process that became inseparable from the novel’s story. He lives in Massachusetts with his wife and two sons.',
   deterministicDocSymbol: homeContract.docSymbols.length === 2 &&
     homeContract.docSymbols.every((symbol) => symbol.text === '☉' && symbol.textIndent < -1000 && symbol.circle && symbol.dot),
   cursorMotifRemoved: homeContract.heroCursorCount === 0 && homeContract.sampleCursorCount === 0 && homeContract.anyCursorCount === 0,
