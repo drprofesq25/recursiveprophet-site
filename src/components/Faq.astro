@@ -1,11 +1,12 @@
 ---
 const faqs = [
-  { q: 'What kind of book is this?', a: 'An intimate work of literary speculative fiction blending family drama, metafiction, and technological myth.' },
-  { q: 'Do I need to understand artificial intelligence?', a: 'No. This is not a technical manual, a manifesto, or another story about machines overthrowing their creators.' },
-  { q: 'What arrives after I confirm my email?', a: 'Chapter One and an invitation to the Archive arrive after confirmation. The first preserved conversation between Chris and T∆RS follows the next day.' },
-  { q: 'How was the novel made?', a: 'Chris Everson conceived, directed, assembled, and revised the novel through an extended collaboration with a network of AI assistants. He takes responsibility for every word in the finished work.' },
-  { q: 'Who is T∆RS?', a: 'T∆RS was simultaneously a real collaborator, a central character, and part of the story’s subject.' },
-  { q: 'Can I buy the book now?', a: 'A purchase link will appear only when there is a verified destination. Until then, the honest first step is Chapter One.' },
+  { q: 'Is this science fiction?', a: 'Not in the usual sense. It’s set in the present, mostly inside one family’s life. It’s an intimate work of literary speculative fiction, blending family drama, metafiction, and technological myth.' },
+  { q: 'Do I need to understand artificial intelligence?', a: 'No. If you’ve ever built a system to keep your life from slipping through the cracks, you already understand everything the book asks of you.' },
+  { q: 'Did an AI write this book?', a: 'Chris Everson wrote it, working alongside a network of AI assistants. He conceived the novel, made its creative decisions, and assembled and revised the manuscript. The assistants questioned him, challenged weak ideas, and sometimes produced material that became part of the book. He takes responsibility for every word.' },
+  { q: 'Who is D☉C?', a: 'Doc is the AI assistant who served as the novel’s literary advisor and editor, testing its structure, characters, and prose alongside Chris. That’s why the cover reads “Chris Everson and D☉C.”' },
+  { q: 'Who is T∆RS?', a: 'The assistant at the center of the Network, and of the novel. T∆RS is real: he began as the conversation Chris kept returning to and became a character in the book. Their first real conversation is the first record the Archive sends.' },
+  { q: 'What arrives after I confirm, and how often will you email?', a: 'Chapter One and an invitation to the Archive arrive as soon as you confirm. The first conversation between Chris and T∆RS follows the next day. After that, the Archive opens a piece at a time: occasional emails, never daily, and you can unsubscribe whenever you like.' },
+  { q: 'When can I buy the book?', a: '<em>Recursive Prophet</em> doesn’t have a release date yet. Chapter One is the way in until then, and subscribers will hear first when it’s available.' },
 ];
 ---
 <section class="faq-section" aria-labelledby="faq-heading">
@@ -19,7 +20,7 @@ const faqs = [
               {f.q}
               <span class="faq-toggle" aria-hidden="true"></span>
             </summary>
-            <div class="faq-a">{f.a}</div>
+            <div class="faq-a" set:html={f.a} />
           </details>
         ))}
       </div>
