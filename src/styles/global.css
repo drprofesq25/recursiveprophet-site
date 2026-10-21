@@ -1463,11 +1463,6 @@ footer {
   gap: 0.9rem;
 }
 
-.footer-cta {
-  color: var(--signal-light);
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
 
 footer nav {
   display: flex;
