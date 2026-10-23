@@ -10,6 +10,7 @@ interface Props {
   noIndex?: boolean;
   ogType?: 'book' | 'website';
   structuredData?: Record<string, unknown>;
+  canonicalPath?: string;
 }
 const {
   title = SITE.title,
@@ -19,8 +20,9 @@ const {
   noIndex = false,
   ogType = 'book',
   structuredData,
+  canonicalPath,
 } = Astro.props;
-const canonical = new URL(Astro.url.pathname, Astro.site ?? SITE.url).href;
+const canonical = new URL(canonicalPath ?? Astro.url.pathname, Astro.site ?? SITE.url).href;
 const ogImage = new URL(SITE.ogImage, Astro.site ?? SITE.url).href;
 ---
 <!doctype html>
@@ -34,11 +36,19 @@ const ogImage = new URL(SITE.ogImage, Astro.site ?? SITE.url).href;
     <link rel="canonical" href={canonical} />
     <meta name="author" content={SITE.authors} />
     <meta name="theme-color" content={SITE.themeColor} />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Libre+Baskerville:wght@400;700&display=optional"
+      rel="preload"
+      href="/fonts/cormorant-garamond-normal-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/libre-baskerville-normal-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
     />
 
     <!-- Open Graph -->
@@ -61,6 +71,12 @@ const ogImage = new URL(SITE.ogImage, Astro.site ?? SITE.url).href;
     <meta name="twitter:image" content={ogImage} />
     <meta name="twitter:image:alt" content={SITE.ogImageAlt} />
 
+    <script is:inline>
+      // Reveal effects hide content only when motion is allowed and the observer exists.
+      if (matchMedia('(prefers-reduced-motion: no-preference)').matches && 'IntersectionObserver' in window) {
+        document.documentElement.classList.add('motion-ready');
+      }
+    </script>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="sitemap" href="/sitemap-index.xml" />
     {structuredData && (
@@ -74,6 +90,9 @@ const ogImage = new URL(SITE.ogImage, Astro.site ?? SITE.url).href;
       <slot />
     </main>
     <slot name="footer" />
+    <script>
+      import '../scripts/reveal';
+    </script>
   </body>
 </html>
 

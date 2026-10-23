@@ -2,34 +2,44 @@
 
 This file records measured design constraints and their current result. The original baseline was
 measured on 2026-07-26; the BQ-270 redesign was measured on 2026-08-02 and re-measured after the
-approved-copy reconciliation on 2026-10-16 and the launch-readiness pass on 2026-10-19 with
-`npm run audit` (axe-core + Playwright). Re-run it any time; it reports rather than opines.
+approved-copy reconciliation on 2026-10-16, the launch-readiness pass on 2026-10-19, and the first
+polish batch on 2026-10-20 with `npm run audit` (axe-core + Playwright). Re-run it any time; it
+reports rather than opines.
 
 The point of this file is that a redesign should not have to rediscover these, and should not
 inherit the current palette's failures by assuming they were intentional.
 
-## Current BQ-270 result — 2026-10-19
+## Current BQ-270 result — 2026-10-20
 
-The capture-first redesign and approved-copy reconciliation clear the inherited defects without
-regressing the behaviors below.
+The capture-first redesign, approved-copy reconciliation, and first polish batch clear the
+inherited defects without regressing the behaviors below.
 
 - **CLS 0** at 1440px, 390px, and the 320 CSS-pixel reflow viewport.
 - **No horizontal overflow** at any audited viewport.
 - **Zero serious or critical axe findings** at all three viewports; the former muted-palette
   contrast failure is cleared.
-- **Reduced motion passes both checks:** smooth scrolling is disabled and the decorative signal
-  loop does not run.
+- **Cold-cache typography is reliable:** the self-hosted Cormorant Garamond, Libre Baskerville, and
+  DM Mono faces load on the first visit at all three viewports. No Google Fonts request is made,
+  only the hero display face and body regular are preloaded, and metric-matched fallbacks preserve
+  CLS 0 while the fonts swap.
+- **Reduced motion passes all five checks:** smooth scrolling and the decorative signal loop are
+  disabled; the constellation, section thread, and Sample-card cursor remain legible and static.
+- **The first mobile viewport shows the book and the full choice:** the compact cover is visible and
+  both hero calls to action end above the 844px fold at 390px wide. The full responsive cover still
+  follows the actions.
 - **The mobile capture path is direct:** Chapter One anchors clear the fixed header once, place the
   form before the preview card, and preserve readable CTA contrast in the scrolled header state.
 - **Invalid email feedback is programmatically exposed** with `aria-invalid` and clears when the
   visitor edits the field.
 - **Six FAQ disclosures pass all four keyboard checks** using native `<details name="faq">`.
 - **Responsive cover negotiation remains correct:** `rp-cover-450.webp` at 350px desktop and
-  `rp-cover-300.webp` at 215px mobile.
-- **230 DOM nodes** on the home page and a deterministic build weight of **801 KB in `dist/`**:
-  495 KB JPG, 240 KB WebP, 48 KB HTML, 17 KB CSS, and 1 KB across XML, SVG, and text. A site
-  visitor receives one cover rendition rather than all six; the separate 252 KB social card is
-  fetched by link-preview crawlers, not by the rendered page.
+  `rp-cover-300.webp` at 215px mobile / 190px reflow. The compact and full mobile placements reuse
+  the existing aspect-ratio-preserving renditions.
+- **387 DOM nodes** on the home page and a deterministic build weight of **1,130 KB in `dist/`**:
+  601 KB JPG, 305 KB WebP, 128 KB WOFF2, 59 KB HTML, 23 KB CSS, 13 KB text, and 1 KB across XML and
+  SVG. The font payload is below the 220 KB gate. A site visitor receives one responsive cover
+  rendition at a time; the separate social card is fetched by link-preview crawlers, not by the
+  rendered page.
 - The static build produces six authored pages: `/`, `/privacy/`, `/404.html`, and the requested,
   problem, and confirmed states under `/chapter-one/`. It also produces two legacy `/first-file/`
   redirects.
@@ -37,11 +47,18 @@ regressing the behaviors below.
   actions. The legacy routes redirect to the corresponding Chapter One states and are also
   `noindex`. The missing-page experience is also `noindex` and excluded from the sitemap. The strict
   audit asserts those contracts plus the approved metadata, Book structured data, crawler files,
-  signup copy, consent, and privacy-notice surface.
+  signup copy, consent, privacy-notice surface, local-font delivery, mobile hero composition, the
+  split visible/metadata byline contract, deterministic D☉C mark, sticky desktop heading, thread
+  alignment, and region-scoped cursor motion.
 
-The browser reported 8 requests and 226 KB fetched on desktop, and 8 requests and 186 KB at both
-390px and 320px. As before, use the deterministic `dist/` inventory—not browser request totals—as
-the weight budget.
+The browser reported 9 requests and 281 KB fetched on desktop, and 9 requests and 241 KB at both
+390px and 320px. Full-page screenshot behavior and browser builds can change those observations;
+as before, use the deterministic `dist/` inventory—not browser request totals—as the weight budget.
+The desktop contract also confirms that the hidden compact cover is not requested; mobile reuses a
+single responsive cover asset for its compact and full placements.
+
+Cold-cache review captures are committed at
+`docs/review/BQ-270-polish/home-{desktop,mobile}-{first-cold,full}.webp`.
 
 ## Must not regress
 

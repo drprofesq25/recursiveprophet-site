@@ -21,7 +21,7 @@ import { readFile as read } from 'node:fs/promises';
 import { mkdirSync } from 'node:fs';
 import { join, extname, resolve } from 'node:path';
 
-const STRICT = process.argv.includes('--strict');
+const STRICT = process.argv.includes('--strict') || process.env.npm_config_strict === 'true';
 const DIST = resolve('dist');
 const OUT = resolve('.audit');
 const PORT = 8099 + Math.floor(process.pid % 500);
@@ -43,7 +43,7 @@ try {
 
 const MIME = { '.html':'text/html', '.css':'text/css', '.js':'text/javascript', '.json':'application/json',
   '.svg':'image/svg+xml', '.jpg':'image/jpeg', '.jpeg':'image/jpeg', '.png':'image/png',
-  '.webp':'image/webp', '.xml':'application/xml', '.ico':'image/x-icon' };
+  '.webp':'image/webp', '.woff2':'font/woff2', '.xml':'application/xml', '.ico':'image/x-icon' };
 
 const server = createServer((req, res) => {
   let p = decodeURIComponent(req.url.split('?')[0]);
@@ -107,12 +107,15 @@ for (const vp of VIEWPORTS) {
   const page = await ctx.newPage();
   let requests = 0;
   const bodies = [];
+  const requestUrls = [];
+  page.on('request', (request) => requestUrls.push(request.url()));
   page.on('response', (r) => {
     requests++;
     bodies.push(r.body().then((b) => b.length).catch(() => 0));
   });
 
   await page.goto(URL_, { waitUntil: 'load' });
+  await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(600);
   await page.addScriptTag({ content: axeSource });
   const results = await page.evaluate(async () => await window.axe.run(document, { resultTypes: ['violations'] }));
@@ -131,8 +134,41 @@ for (const vp of VIEWPORTS) {
   });
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
   const nodes = await page.evaluate(() => document.getElementsByTagName('*').length);
+  const fontState = await page.evaluate(() => ({
+    display: document.fonts.check('400 48px "Cormorant Garamond"'),
+    displaySemibold: document.fonts.check('600 24px "Cormorant Garamond"'),
+    body: document.fonts.check('400 16px "Libre Baskerville"'),
+    bodyBold: document.fonts.check('700 16px "Libre Baskerville"'),
+    bodyItalic: document.fonts.check('italic 400 16px "Libre Baskerville"'),
+    mono: document.fonts.check('400 12px "DM Mono"'),
+  }));
+  const mobileHero = vp.width <= 700 ? await page.evaluate(() => {
+    const compact = document.querySelector('.hero-cover-compact');
+    const buttons = document.querySelector('.hero-btns');
+    const annotation = document.querySelector('.hero-annotation');
+    const fullCover = document.querySelector('.cover-img');
+    const compactRect = compact?.getBoundingClientRect();
+    const buttonsRect = buttons?.getBoundingClientRect();
+    const annotationRect = annotation?.getBoundingClientRect();
+    const annotationLineHeight = annotation ? Number.parseFloat(getComputedStyle(annotation).lineHeight) : 0;
+    const fullCoverRect = fullCover?.getBoundingClientRect();
+    return {
+      compactVisible: Boolean(compactRect && compactRect.width >= 80 && compactRect.width <= 88 && compactRect.bottom <= innerHeight),
+      annotationSingleLine: Boolean(annotation && annotationRect &&
+        annotationRect.height <= annotationLineHeight * 1.25 && annotation.scrollWidth <= annotation.clientWidth + 1),
+      buttonsAboveFold: Boolean(buttonsRect && buttonsRect.bottom <= innerHeight),
+      fullCoverBelowFold: Boolean(fullCoverRect && fullCoverRect.top >= innerHeight),
+    };
+  }) : null;
 
-  await page.screenshot({ path: join(OUT, `${vp.label}.png`), fullPage: true });
+  await page.screenshot({ path: join(OUT, `home-${vp.label}-first-viewport-cold.png`) });
+  for (const image of await page.locator('img[loading="lazy"]:visible').all()) {
+    await image.scrollIntoViewIfNeeded();
+    await image.evaluate(async (element) => {
+      if (element instanceof HTMLImageElement) await element.decode();
+    });
+  }
+  await page.screenshot({ path: join(OUT, `home-${vp.label}-cold.png`), fullPage: true });
 
   // Await every pending body before totalling -- reading the accumulator early
   // under-reports by however many responses are still in flight.
@@ -145,6 +181,24 @@ for (const vp of VIEWPORTS) {
   console.log(`  CLS ${cls}   horizontal overflow: ${overflow ? 'YES -- investigate' : 'none'}`);
   if (img) console.log(`  cover negotiated: ${img.src} rendered at ${img.rendered}px`);
   console.log(`  axe violations: ${results.violations.length}`);
+  const externalFonts = requestUrls.filter((url) => /fonts\.(?:googleapis|gstatic)\.com/i.test(url));
+  const compactCoverRequests = requestUrls.filter((url) => /rp-cover-300\.(?:webp|jpg)(?:$|\?)/i.test(url));
+  const fontChecksPass = Object.values(fontState).every(Boolean);
+  if (!fontChecksPass) contractFailures++;
+  if (externalFonts.length) contractFailures++;
+  console.log(`  ${fontChecksPass ? 'PASS' : 'FAIL'} cold-cache webfonts loaded`);
+  console.log(`  ${externalFonts.length === 0 ? 'PASS' : 'FAIL'} no Google font requests`);
+  if (vp.label === 'desktop') {
+    const desktopCompactCoverNotFetched = compactCoverRequests.length === 0;
+    if (!desktopCompactCoverNotFetched) contractFailures++;
+    console.log(`  ${desktopCompactCoverNotFetched ? 'PASS' : 'FAIL'} desktop compact cover not fetched`);
+  }
+  if (mobileHero) {
+    for (const [name, passed] of Object.entries(mobileHero)) {
+      if (!passed) contractFailures++;
+      console.log(`  ${passed ? 'PASS' : 'FAIL'} mobileHero.${name}`);
+    }
+  }
   for (const v of results.violations) {
     console.log(`    [${v.impact}] ${v.id} -- ${v.nodes.length} node(s): ${v.help}`);
     if (v.impact === 'serious' || v.impact === 'critical') serious.add(v.id);
@@ -175,14 +229,24 @@ const reducedPage = await reducedCtx.newPage();
 await reducedPage.goto(URL_, { waitUntil: 'load' });
 const reducedState = await reducedPage.evaluate(() => {
   const signal = document.querySelector('.signal-line');
+  const constellation = document.querySelector('.constellation path');
+  const thread = document.querySelector('.thread');
   return {
     scrollBehavior: getComputedStyle(document.documentElement).scrollBehavior,
     signalAnimation: signal ? getComputedStyle(signal).animationName : '',
+    constellationAnimation: constellation ? getComputedStyle(constellation).animationName : '',
+    threadAnimation: thread ? getComputedStyle(thread, '::after').animationName : '',
+    threadVisible: document.querySelector('.thread') !== null,
+    motionReady: document.documentElement.classList.contains('motion-ready'),
+    machineTextVisible: [...document.querySelectorAll('.book-page-machine')].every((el) => getComputedStyle(el).opacity === '1' && el.textContent.trim().length > 0),
   };
 });
 const reducedChecks = {
   smoothScrollDisabled: reducedState.scrollBehavior === 'auto',
   decorativeLoopDisabled: reducedState.signalAnimation === 'none',
+  constellationStatic: reducedState.constellationAnimation === 'none',
+  threadStaticAndVisible: reducedState.threadVisible && reducedState.threadAnimation === 'none',
+  revealsOff: !reducedState.motionReady && reducedState.machineTextVisible,
 };
 console.log('\n=== reduced motion ===');
 for (const [name, passed] of Object.entries(reducedChecks)) {
@@ -237,6 +301,10 @@ for (const [ex, n] of Object.entries(inv.byExt).sort((a, b) => b[1] - a[1]))
   console.log(`  ${ex.padEnd(7)} ${String(Math.round(n / 1024)).padStart(5)} KB`);
 console.log(`  ${'TOTAL'.padEnd(7)} ${String(Math.round(inv.total / 1024)).padStart(5)} KB on disk`);
 console.log('  note: the cover ships in 6 renditions; any single visitor fetches one.');
+const fontBytes = inv.byExt['.woff2'] ?? 0;
+const fontBudgetPasses = fontBytes <= 220 * 1024;
+if (!fontBudgetPasses) contractFailures++;
+console.log(`  ${fontBudgetPasses ? 'PASS' : 'FAIL'} font payload ${Math.round(fontBytes / 1024)} KB / 220 KB`);
 
 // --- keyboard operability of the FAQ disclosure widgets ---
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
@@ -290,6 +358,9 @@ const homeContract = await homePage.evaluate(() => {
     ogImageHeight: document.querySelector('meta[property="og:image:height"]')?.getAttribute('content') ?? '',
     twitterCard: document.querySelector('meta[name="twitter:card"]')?.getAttribute('content') ?? '',
     twitterImage: document.querySelector('meta[name="twitter:image"]')?.getAttribute('content') ?? '',
+    fontPreloads: document.querySelectorAll('link[rel="preload"][as="font"]').length,
+    googleFontLinks: [...document.querySelectorAll('link')]
+      .filter((link) => /fonts\.(?:googleapis|gstatic)\.com/i.test(link.href)).length,
     structuredData: (() => {
       try {
         return JSON.parse(document.querySelector('script[type="application/ld+json"]')?.textContent ?? 'null');
@@ -317,7 +388,77 @@ const homeContract = await homePage.evaluate(() => {
     hasRetiredFirstFile: /First File|Open the First File/i.test(text),
     hasStaleDate: text.includes('September 13, 2026'),
     hasOldUnverifiedExcerpt: text.includes('He had told the system everything'),
+    footerByline: normalized(document.querySelector('.footer-brand span')?.textContent ?? ''),
+    coverByline: normalized(document.querySelector('.file-annotation > span:last-child')?.textContent ?? ''),
+    heroAnnotation: normalized(document.querySelector('.hero-annotation')?.textContent ?? ''),
+    heroSupportingLine: normalized(document.querySelector('.hero-subhead')?.textContent ?? ''),
+    heroDeck: normalized(document.querySelector('.hero-italic')?.textContent ?? ''),
+    aboutBio: normalized(document.querySelector('.about-chris-copy > p:last-child')?.textContent ?? ''),
+    heroCursorCount: document.querySelectorAll('.file-annotation .artifact-cursor').length,
+    sampleCursorCount: document.querySelectorAll('.chapter-preview-tag .artifact-cursor').length,
+    anyCursorCount: document.querySelectorAll('.artifact-cursor').length,
+    docSymbols: [...document.querySelectorAll('.doc-symbol')].map((symbol) => {
+      const style = getComputedStyle(symbol);
+      const circle = getComputedStyle(symbol, '::before');
+      const dot = getComputedStyle(symbol, '::after');
+      return {
+        text: symbol.textContent,
+        textIndent: Number.parseFloat(style.textIndent),
+        circle: circle.borderTopStyle === 'solid' && Number.parseFloat(circle.borderTopWidth) > 0,
+        dot: dot.backgroundColor !== 'rgba(0, 0, 0, 0)' &&
+          Number.parseFloat(dot.width) > 0 && Number.parseFloat(dot.height) > 0,
+      };
+    }),
+    bandOverflow: getComputedStyle(document.querySelector('.band-dark')).overflow,
+    whatHeadingPosition: getComputedStyle(document.querySelector('.what-heading-col')).position,
+    worksNodeDelta: (() => {
+      const thread = document.querySelector('.band-dark > .thread')?.getBoundingClientRect();
+      const node = document.querySelector('.thread-node-works')?.getBoundingClientRect();
+      return thread && node ? Math.abs((thread.left + thread.width / 2) - (node.left + node.width / 2)) : Infinity;
+    })(),
+    quietChrome: (() => {
+      const nav = document.querySelector('.site-nav a:not(.nav-cta)');
+      const sectionTag = document.querySelector('.section-tag');
+      if (!nav || !sectionTag) return false;
+      const navStyle = getComputedStyle(nav);
+      const tagStyle = getComputedStyle(sectionTag);
+      return !/DM Mono/i.test(navStyle.fontFamily) && navStyle.textTransform === 'none' &&
+        !/DM Mono/i.test(tagStyle.fontFamily) && tagStyle.textTransform === 'none';
+    })(),
+    sampleArtifact: (() => {
+      const card = document.querySelector('.chapter-preview');
+      if (!card) return false;
+      const rect = card.getBoundingClientRect();
+      const tab = getComputedStyle(card, '::after');
+      return Math.abs((rect.width / rect.height) - (5 / 3)) < 0.25 &&
+        Number.parseFloat(tab.height) > 0 && tab.content !== 'none';
+    })(),
+    viewTransitions: getComputedStyle(document.querySelector('.wordmark')).viewTransitionName === 'site-wordmark' &&
+      getComputedStyle(document.querySelector('.signal-line')).viewTransitionName === 'signal-thread',
+    desktopSynopsisOpen: document.querySelector('.synopsis-details')?.hasAttribute('open') === true &&
+      getComputedStyle(document.querySelector('.synopsis-details > summary')).display === 'none',
+    constellationBookends: document.querySelectorAll('.hero .constellation').length === 2 && document.querySelectorAll('.final-constellation .constellation').length === 1 &&
+      getComputedStyle(document.querySelector('.final-constellation .constellation path')).animationName === 'none',
   };
+});
+
+const stickyState = await homePage.evaluate(async () => {
+  const band = document.querySelector('.band-dark');
+  const heading = document.querySelector('.what-heading-col');
+  if (!band || !heading) return null;
+  const originalScrollBehavior = document.documentElement.style.scrollBehavior;
+  document.documentElement.style.scrollBehavior = 'auto';
+  const bandTop = window.scrollY + band.getBoundingClientRect().top;
+  window.scrollTo(0, bandTop + 240);
+  await new Promise((resolveFrame) => requestAnimationFrame(() => requestAnimationFrame(resolveFrame)));
+  const result = {
+    actualTop: Math.round(heading.getBoundingClientRect().top),
+    expectedTop: Math.round(Number.parseFloat(getComputedStyle(heading).top)),
+  };
+  window.scrollTo(0, 0);
+  document.documentElement.style.scrollBehavior = originalScrollBehavior;
+  await new Promise((resolveFrame) => requestAnimationFrame(resolveFrame));
+  return result;
 });
 
 const socialCardAsset = await homePage.evaluate(async () => {
@@ -330,19 +471,41 @@ const socialCardAsset = await homePage.evaluate(async () => {
 });
 
 const homeChecks = {
-  pageTitle: homeContract.title === 'Recursive Prophet — A Speculative Novel by Chris Everson',
+  pageTitle: homeContract.title === 'Recursive Prophet — A Novel by Chris Everson and D☉C',
   metaDescription: homeContract.description === 'A restless creator builds a Network of AI assistants to become his most complete self. The system works, but the line between assistance and authorship blurs.',
   socialTitle: homeContract.ogTitle === 'He Built the Network. It Began Shaping Him in Return.',
-  socialDescription: homeContract.ogDescription === 'An intimate speculative novel about personal identity, creative ownership, and what remains ours when the tools that expand our lives begin shaping them.',
+  socialDescription: homeContract.ogDescription === 'An intimate novel about personal identity, creative ownership, and what remains ours when the tools that expand our lives begin shaping them.',
   socialCardPath: homeContract.ogImage.endsWith('/social/rp-social-card-1200x630.jpg'),
   socialCardDimensions: homeContract.ogImageWidth === '1200' && homeContract.ogImageHeight === '630',
   socialCardAssetDimensions: socialCardAsset?.width === 1200 && socialCardAsset?.height === 630,
   socialCardSharedAcrossMetadata: homeContract.twitterCard === 'summary_large_image' &&
     homeContract.twitterImage === homeContract.ogImage,
+  maxTwoFontPreloads: homeContract.fontPreloads <= 2,
+  noGoogleFontLinks: homeContract.googleFontLinks === 0,
   bookStructuredData: homeContract.structuredData?.['@type'] === 'Book' &&
     homeContract.structuredData?.name === 'Recursive Prophet' &&
     homeContract.structuredData?.author?.name === 'Chris Everson' &&
-    homeContract.structuredData?.publisher?.name === 'The Bindery',
+    homeContract.structuredData?.publisher === undefined,
+  approvedVisibleBylines: homeContract.footerByline ===
+    'A novel by Chris Everson and D☉C' &&
+    homeContract.coverByline === '',
+  approvedHeroCopy: homeContract.heroAnnotation === 'Recursive Prophet · A novel' &&
+    homeContract.heroSupportingLine === 'Then it began shaping him in return.' &&
+    homeContract.heroDeck === 'An intimate novel about personal identity and creative ownership in the age of AI.',
+  approvedAuthorBio: homeContract.aboutBio ===
+    'Chris Everson is a writer, musician, and creative systems-builder. His work explores personal identity, family, creativity, and human–AI collaboration. Recursive Prophet grew from an extended dialogue with a network of AI assistants, a process that became inseparable from the novel’s story. He lives in Massachusetts with his wife and two sons.',
+  deterministicDocSymbol: homeContract.docSymbols.length === 1 &&
+    homeContract.docSymbols.every((symbol) => symbol.text === '☉' && symbol.textIndent < -1000 && symbol.circle && symbol.dot),
+  cursorMotifRemoved: homeContract.heroCursorCount === 0 && homeContract.sampleCursorCount === 0 && homeContract.anyCursorCount === 0,
+  whatHeadingSticks: homeContract.bandOverflow === 'clip' &&
+    homeContract.whatHeadingPosition === 'sticky' && stickyState !== null &&
+    Math.abs(stickyState.actualTop - stickyState.expectedTop) <= 1,
+  worksNodeOnThread: homeContract.worksNodeDelta <= 1,
+  quietChrome: homeContract.quietChrome,
+  sampleArtifact: homeContract.sampleArtifact,
+  crossDocumentViewTransitions: homeContract.viewTransitions,
+  desktopSynopsisUnfolded: homeContract.desktopSynopsisOpen,
+  staticFinalConstellation: homeContract.constellationBookends,
   twoCaptureForms: homeContract.formCount === 2,
   captureFormsMatchMaster: homeContract.formsValid,
   sectionBridgesTargetForm: homeContract.allBridgesTargetForm,
@@ -376,6 +539,79 @@ for (const [name, passed] of Object.entries(homeChecks)) {
   console.log(`  ${passed ? 'PASS' : 'FAIL'} ${name}`);
 }
 await homeCtx.close();
+
+// --- batch 2: mobile fold and compact social landing route ---
+const foldCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+const foldPage = await foldCtx.newPage();
+await foldPage.goto(URL_, { waitUntil: 'load' });
+const mobileSynopsisFolded = await foldPage.evaluate(() => {
+  const details = document.querySelector('.synopsis-details');
+  const summary = document.querySelector('.synopsis-details > summary');
+  return details instanceof HTMLDetailsElement && !details.open &&
+    summary instanceof HTMLElement && getComputedStyle(summary).display !== 'none' &&
+    summary.textContent?.trim() === 'Read the full note';
+});
+if (!mobileSynopsisFolded) contractFailures++;
+console.log(`\n=== batch 2 responsive contracts ===`);
+console.log(`  ${mobileSynopsisFolded ? 'PASS' : 'FAIL'} mobileSynopsisFolded`);
+await foldCtx.close();
+
+const socialExpectedConsent = 'Enter your email and confirm your address to receive Chapter One and an invitation to the Archive, followed the next day by the first preserved conversation between Chris Everson and T∆RS. You’ll also receive occasional emails from Chris about Recursive Prophet—including book news, selected artifacts, and transmissions from the Archive—and you can unsubscribe at any time.';
+for (const vp of VIEWPORTS.filter(({ width }) => width <= 390)) {
+  const socialCtx = await browser.newContext({ viewport: { width: vp.width, height: vp.height } });
+  const socialPage = await socialCtx.newPage();
+  const socialResponse = await socialPage.goto(new URL('/chapter-one/', URL_).href, { waitUntil: 'load' });
+  await socialPage.evaluate(() => document.fonts.ready);
+  await socialPage.addScriptTag({ content: axeSource });
+  const socialAxe = await socialPage.evaluate(async () => await window.axe.run(document, { resultTypes: ['violations'] }));
+  for (const violation of socialAxe.violations.filter((v) => ['serious', 'critical'].includes(v.impact))) {
+    serious.add(violation.id);
+  }
+  const socialState = await socialPage.evaluate(() => {
+    const normalized = (value) => value.replace(/\s+/g, ' ').trim();
+    const form = document.querySelector('form[data-capture-form]');
+    const link = document.querySelector('.chapter-one-book-link');
+    return {
+      robots: document.querySelector('meta[name="robots"]')?.getAttribute('content') ?? '',
+      canonical: document.querySelector('link[rel="canonical"]')?.getAttribute('href') ?? '',
+      heading: normalized(document.querySelector('main h1')?.textContent ?? ''),
+      offer: normalized(document.querySelector('.chapter-one-offer p')?.textContent ?? ''),
+      consent: normalized(form?.querySelector('.capture-consent')?.textContent ?? ''),
+      privacyText: form?.querySelector('.capture-privacy a')?.textContent?.trim() ?? '',
+      privacyHref: form?.querySelector('.capture-privacy a')?.getAttribute('href') ?? '',
+      button: form?.querySelector('button')?.textContent?.trim() ?? '',
+      withinFirstScreen: Boolean(link && link.getBoundingClientRect().bottom <= innerHeight),
+      noOverflow: document.documentElement.scrollWidth <= innerWidth,
+      targetSizes: [...document.querySelectorAll('.capture-field input, form button')]
+        .every((element) => element.getBoundingClientRect().height >= 44),
+    };
+  });
+  const socialChecks = {
+    status: socialResponse?.status() === 200,
+    noIndex: socialState.robots.split(',').map((value) => value.trim()).includes('noindex'),
+    canonicalHome: socialState.canonical === 'https://recursiveprophet.com/',
+    approvedHeadline: socialState.heading === 'He built the Network to help him become the fullest version of himself.',
+    approvedOffer: socialState.offer === 'Chapter One arrives by email, along with your invitation to the Archive: the real conversations and records the novel grew from, opening a piece at a time.',
+    approvedConsent: socialState.consent === socialExpectedConsent,
+    approvedForm: socialState.privacyText === 'Email-list privacy' &&
+      socialState.privacyHref === '/privacy/' && socialState.button === 'Send Me Chapter One',
+    firstScreen: socialState.withinFirstScreen,
+    noOverflow: socialState.noOverflow,
+    targetSizes: socialState.targetSizes,
+    axe: socialAxe.violations.filter((v) => ['serious', 'critical'].includes(v.impact)).length === 0,
+  };
+  for (const [name, passed] of Object.entries(socialChecks)) {
+    if (!passed) contractFailures++;
+    console.log(`  ${passed ? 'PASS' : 'FAIL'} /chapter-one/ ${vp.width}px ${name}`);
+  }
+  await socialPage.screenshot({ path: join(OUT, `chapter-one-${vp.label}.png`) });
+  await socialCtx.close();
+}
+
+const socialSitemap = readFileSync(join(DIST, 'sitemap-0.xml'), 'utf8');
+const socialLandingExcluded = !/<loc>[^<]*\/chapter-one\/<\/loc>/.test(socialSitemap);
+if (!socialLandingExcluded) contractFailures++;
+console.log(`  ${socialLandingExcluded ? 'PASS' : 'FAIL'} /chapter-one/ excludedFromSitemap`);
 
 // --- transactional route contracts: honest actions and no search indexing ---
 const routeCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
@@ -411,6 +647,10 @@ for (const contract of routeContracts) {
       heading: document.querySelector('main h1')?.textContent?.trim() ?? '',
       actionText: action?.textContent?.trim() ?? '',
       actionHref: action?.getAttribute('href') ?? '',
+      constellationCount: document.querySelectorAll('.interior-constellation .constellation').length,
+      signalTransition: getComputedStyle(document.querySelector('.interior-signal')).viewTransitionName,
+      leadSize: Number.parseFloat(getComputedStyle(document.querySelector('.interior-copy p:first-child')).fontSize),
+      background: getComputedStyle(document.querySelector('.interior-page')).backgroundColor,
     };
   });
   const checks = {
@@ -419,6 +659,10 @@ for (const contract of routeContracts) {
     heading: state.heading === contract.heading,
     actionText: state.actionText === contract.actionText,
     actionHref: state.actionHref === contract.actionHref,
+    staticConstellation: state.constellationCount === 1,
+    coverNight: state.background === 'rgb(10, 24, 40)',
+    signalViewTransition: state.signalTransition === 'signal-thread',
+    requestedActionDominant: contract.path !== '/chapter-one/requested/' || state.leadSize >= 24,
   };
   for (const [name, passed] of Object.entries(checks)) {
     if (!passed) contractFailures++;
@@ -463,6 +707,8 @@ const missingState = await missingPage.evaluate(() => {
     text: document.querySelector('main .interior-copy')?.textContent?.replace(/\s+/g, ' ').trim() ?? '',
     actionText: action?.textContent?.trim() ?? '',
     actionHref: action?.getAttribute('href') ?? '',
+    constellationCount: document.querySelectorAll('.interior-constellation .constellation').length,
+    background: getComputedStyle(document.querySelector('.interior-page')).backgroundColor,
   };
 });
 const missingChecks = {
@@ -472,6 +718,8 @@ const missingChecks = {
   approvedCopy: missingState.text === 'The Network remembers many things. Apparently, this was not one of them.',
   actionText: missingState.actionText === 'Return to the Book',
   actionHref: missingState.actionHref === '/#book',
+  coverNightWithConstellation: missingState.background === 'rgb(10, 24, 40)' &&
+    missingState.constellationCount === 1,
 };
 console.log('\n=== missing-page contract ===');
 for (const [name, passed] of Object.entries(missingChecks)) {
@@ -505,6 +753,8 @@ const privacyState = await privacyPage.evaluate(() => {
     hasProviderScope: text.includes('MailerLite processes subscriber information'),
     hasRights: [...document.querySelectorAll('main h2')]
       .some((heading) => heading.textContent?.trim() === 'Your choices'),
+    constellationCount: document.querySelectorAll('.interior-constellation .constellation').length,
+    background: getComputedStyle(document.querySelector('.interior-page')).backgroundColor,
   };
 });
 const privacyChecks = {
@@ -514,6 +764,8 @@ const privacyChecks = {
   consentVersion: privacyState.hasConsentVersion,
   providerScope: privacyState.hasProviderScope,
   rightsSection: privacyState.hasRights,
+  coverNightWithConstellation: privacyState.background === 'rgb(10, 24, 40)' &&
+    privacyState.constellationCount === 1,
 };
 console.log('\n=== privacy notice contract ===');
 for (const [name, passed] of Object.entries(privacyChecks)) {

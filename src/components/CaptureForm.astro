@@ -131,7 +131,6 @@ const statusId = `${idPrefix}-status`;
   .capture-form button { align-self: flex-start; cursor: pointer; min-height: 3rem; }
 
   .capture-note,
-  .capture-consent,
   .capture-privacy,
   .capture-status {
     font-family: var(--mono);
@@ -142,7 +141,15 @@ const statusId = `${idPrefix}-status`;
     margin: 0;
   }
 
-  .capture-consent { margin-top: 0.35rem; }
+  .capture-consent {
+    max-width: 60ch;
+    margin-top: 0.35rem;
+    color: var(--muted);
+    font-family: var(--body);
+    font-size: 0.85rem;
+    letter-spacing: 0;
+    line-height: 1.6;
+  }
   .capture-privacy a { color: var(--signal); }
   .capture-status { min-height: 1.1rem; color: var(--amber); }
 

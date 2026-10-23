@@ -1,0 +1,438 @@
+diff --git a/scripts/constellation/cover-nodes.json b/scripts/constellation/cover-nodes.json
+new file mode 100644
+index 0000000..c66d51d
+--- /dev/null
++++ b/scripts/constellation/cover-nodes.json
+@@ -0,0 +1 @@
++[[299.1, 449.5, 286], [299.2, 449.3, 118], [425.5, 221.1, 110], [478.6, 126.0, 103], [435.7, 523.6, 85], [385.5, 140.9, 79], [537.9, 14.6, 73], [117.9, 252.6, 71], [322.4, 63.8, 70], [450.8, 317.8, 63], [83.2, 406.6, 58], [297.6, 196.8, 57], [298.3, 328.9, 56], [167.6, 3.2, 52], [21.8, 78.3, 51], [147.1, 489.6, 51], [299.5, 554.7, 51], [555.2, 556.9, 50], [364.2, 411.0, 47], [162.0, 199.8, 45], [233.0, 401.0, 45], [394.4, 364.2, 43], [285.9, 610.1, 38], [139.4, 135.0, 37], [590.3, 85.4, 36], [584.8, 481.1, 36], [204.2, 353.2, 33], [365.6, 261.0, 32], [297.5, 151.6, 31], [514.3, 188.3, 31], [523.2, 510.5, 31], [555.9, 165.9, 29], [367.3, 330.4, 29], [241.5, 177.8, 27], [362.8, 294.7, 27], [234.7, 261.1, 26], [297.9, 268.5, 26], [401.9, 306.3, 26], [120.9, 330.8, 26], [155.7, 624.1, 26], [39.7, 483.8, 25], [359.5, 484.0, 24], [263.5, 102.2, 23], [483.0, 254.0, 23], [227.0, 327.8, 23], [53.0, 460.2, 23], [356.9, 364.7, 22], [263.0, 19.0, 21], [110.0, 53.0, 21], [550.0, 221.0, 21], [246.0, 224.0, 21], [507.5, 72.5, 20], [178.0, 259.9, 20], [549.8, 442.2, 20], [441.9, 55.1, 19], [246.0, 62.6, 19], [334.0, 161.8, 19], [361.8, 207.4, 19], [298.1, 238.2, 19], [191.6, 313.7, 19], [239.2, 362.2, 19], [327.4, 397.1, 19], [75.5, 16.6, 18], [270.1, 394.1, 18], [229.0, 445.8, 18], [443.6, 454.0, 18], [224.2, 497.5, 18], [169.1, 554.3, 18], [487.3, 591.3, 18], [334.2, 277.8, 17], [558.1, 331.4, 17], [423.0, 410.6, 17], [174.1, 430.9, 17], [9.7, 34.1, 16], [67.2, 161.1, 16], [325.5, 249.2, 16], [261.5, 276.8, 16], [159.5, 309.5, 16], [9.5, 559.5, 16], [592.7, 214.7, 15], [233.4, 289.4, 15], [492.2, 414.4, 14], [547.5, 643.3, 14], [207.4, 273.4, 13], [298.5, 385.2, 13], [298.8, 413.6, 13], [299.2, 517.5, 13], [388.2, 17.1, 12], [186.8, 99.2, 12], [327.3, 221.8, 12], [271.7, 247.7, 12], [81.5, 298.0, 12], [415.8, 98.2, 11], [247.8, 312.2, 11], [159.7, 347.3, 11], [263.9, 374.6, 11], [333.5, 376.5, 11], [143.8, 398.7, 11], [300.0, 666.0, 11], [89.2, 475.0, 10], [377.6, 531.1, 10], [592.8, 603.5, 10], [332.6, 83.2, 9], [336.9, 83.8, 9], [222.0, 137.9, 8], [337.6, 304.2, 8], [250.9, 342.9, 8], [343.1, 344.9, 8], [132.2, 478.8, 8], [506.5, 478.0, 8], [11.0, 282.4, 7], [464.7, 371.0, 7], [255.4, 422.9, 7], [512.9, 451.3, 7], [142.4, 479.0, 7], [66.6, 538.3, 7], [351.0, 560.3, 7], [448.8, 510.7, 6]]
+\ No newline at end of file
+diff --git a/scripts/constellation/gen_constellation.py b/scripts/constellation/gen_constellation.py
+new file mode 100644
+index 0000000..d16acda
+--- /dev/null
++++ b/scripts/constellation/gen_constellation.py
+@@ -0,0 +1,118 @@
++"""Generate the hero constellation SVG from the cover's own node positions.
++# Usage: python3 scripts/constellation/gen_constellation.py scripts/constellation/cover-nodes.json src/components/Constellation.astro
++# cover-nodes.json = amber node centroids sampled from public/cover/rp-cover-600.jpg (x, y, area).
++# Regenerate whenever the final cover master changes.
++
++Coordinates are in the cover's 600x960 space, so the SVG can sit exactly on the
++cover image (viewBox 0 0 600 960, overflow visible) and its lines appear to leave
++the cover's edge nodes and spread across the hero. Deterministic (seeded).
++"""
++import json, math, random, sys
++
++dots = json.load(open(sys.argv[1]))
++out = sys.argv[2]
++random.seed(1729)
++
++W, H = 600, 960
++# Anchors: the cover's own nodes nearest each edge (title band excluded upstream).
++anchors = [(x, y) for x, y, s in dots if x < 60 or x > 540 or y < 60]
++anchors += [(0, 640), (600, 640)]  # lower flanks so the field reaches the title band
++
++def dist_to_cover(x, y):
++    dx = max(0 - x, 0, x - W)
++    dy = max(0 - y, 0, y - H)
++    return math.hypot(dx, dy)
++
++# Halo: nodes hug the cover and thin out fast, so the network reads as the
++# cover's own field spilling past its edges, not a page-wide "plexus" texture.
++nodes = []
++tries = 0
++while len(nodes) < 46 and tries < 80000:
++    tries += 1
++    x, y = random.uniform(-340, 900), random.uniform(-260, 1240)
++    d = dist_to_cover(x, y)
++    if d < 22 or d > 320:
++        continue
++    if random.random() > math.exp(-d / 120):
++        continue
++    spacing = 44 + d * 0.12
++    if any(math.hypot(x - a, y - b) < spacing for a, b in nodes + anchors):
++        continue
++    nodes.append((x, y))
++
++nodes.sort(key=lambda p: dist_to_cover(*p))
++placed = [(a, 0) for a in anchors]
++edges = []
++depth = {}
++for p in nodes:
++    cands = sorted(placed, key=lambda q: math.hypot(p[0] - q[0][0], p[1] - q[0][1]))
++    parent, pd = cands[0]
++    edges.append((parent, p, pd))
++    if len(cands) > 1 and random.random() < 0.3:
++        q, qd = cands[1]
++        if math.hypot(p[0] - q[0], p[1] - q[1]) < 150:
++            edges.append((q, p, qd))
++    depth[p] = pd + 1
++    placed.append((p, pd + 1))
++
++# Tendrils: three chains leave the cover's left edge and reach toward the
++# headline, fading out before they reach the text column.
++left_anchors = sorted([a for a in anchors if a[0] < 60], key=lambda a: a[1])
++starts = [left_anchors[1], left_anchors[len(left_anchors) // 2], (0, 640)]
++for sx, sy in starts:
++    ang = math.pi + random.uniform(-0.35, 0.35)
++    prev, dep = (sx, sy), 0
++    for step in range(random.randint(5, 7)):
++        ang += random.uniform(-0.45, 0.45)
++        ang = min(max(ang, math.pi - 0.7), math.pi + 0.7)
++        L = random.uniform(48, 78)
++        nxt = (prev[0] + L * math.cos(ang), prev[1] + L * math.sin(ang))
++        if nxt[0] < -470:
++            break
++        edges.append((prev, nxt, dep))
++        dep += 1
++        depth[nxt] = dep
++        nodes.append(nxt)
++        prev = nxt
++
++maxd = max(depth.values())
++
++def op(p):
++    d = dist_to_cover(*p)
++    return round(max(0.07, 0.6 - d / 560), 2)
++
++def delay(dep):
++    return round(0.12 * dep + random.uniform(0, 0.08), 2)
++
++lines = []
++for a, b, dep in edges:
++    lines.append(
++        f'<path d="M{a[0]:.0f} {a[1]:.0f}L{b[0]:.0f} {b[1]:.0f}" pathLength="1" '
++        f'style="--d:{delay(dep)};--o:{op(b)}"/>'
++    )
++circles = []
++for p in nodes:
++    r = 3.6 if random.random() < 0.14 else 2.2
++    circles.append(
++        f'<circle cx="{p[0]:.0f}" cy="{p[1]:.0f}" r="{r}" style="--d:{delay(depth[p]) + 0.35:.2f};--o:{min(0.95, op(p) + 0.25):.2f}"/>'
++    )
++# two quiet rings echo the cover's orbit motif
++rings = []
++for p in random.sample([n for n in nodes if 60 < dist_to_cover(*n) < 220], 2):
++    rings.append(
++        f'<circle class="ring" cx="{p[0]:.0f}" cy="{p[1]:.0f}" r="22" style="--d:{delay(depth[p]) + 0.5:.2f};--o:{op(p):.2f}"/>'
++    )
++
++svg = (
++    '<svg class="constellation" viewBox="0 0 600 960" preserveAspectRatio="none" '
++    'aria-hidden="true" focusable="false">'
++    '<g class="c-lines">' + ''.join(lines) + '</g>'
++    '<g class="c-nodes">' + ''.join(circles + rings) + '</g>'
++    '</svg>'
++)
++open(out, 'w').write(
++    '---\n// Generated from the cover\'s node positions by gen_constellation.py (seed 1729).\n'
++    '// Coordinates share the cover image\'s 600x960 space; see .constellation in global.css.\n---\n'
++    + svg + '\n'
++)
++print(len(nodes), len(edges), maxd, len(svg))
+diff --git a/src/components/Constellation.astro b/src/components/Constellation.astro
+new file mode 100644
+index 0000000..1fa827a
+--- /dev/null
++++ b/src/components/Constellation.astro
+@@ -0,0 +1,5 @@
++---
++// Generated from the cover's node positions by gen_constellation.py (seed 1729).
++// Coordinates share the cover image's 600x960 space; see .constellation in global.css.
++---
++<svg class="constellation" viewBox="0 0 600 960" preserveAspectRatio="none" aria-hidden="true" focusable="false"><g class="c-lines"><path d="M0 640L-23 943" pathLength="1" style="--d:0.07;--o:0.56"/><path d="M538 15L605 -24" pathLength="1" style="--d:0.02;--o:0.56"/><path d="M-23 943L247 992" pathLength="1" style="--d:0.19;--o:0.54"/><path d="M10 560L-33 522" pathLength="1" style="--d:0.05;--o:0.54"/><path d="M11 282L-33 330" pathLength="1" style="--d:0.02;--o:0.54"/><path d="M168 3L222 -35" pathLength="1" style="--d:0.05;--o:0.54"/><path d="M388 17L385 -40" pathLength="1" style="--d:0.07;--o:0.53"/><path d="M76 17L49 -46" pathLength="1" style="--d:0.08;--o:0.52"/><path d="M-23 943L-47 849" pathLength="1" style="--d:0.14;--o:0.52"/><path d="M600 640L649 835" pathLength="1" style="--d:0.08;--o:0.51"/><path d="M590 85L651 93" pathLength="1" style="--d:0.04;--o:0.51"/><path d="M22 78L-52 154" pathLength="1" style="--d:0.08;--o:0.51"/><path d="M0 640L-55 598" pathLength="1" style="--d:0.02;--o:0.5"/><path d="M10 560L-55 598" pathLength="1" style="--d:0.01;--o:0.5"/><path d="M558 331L658 369" pathLength="1" style="--d:0.02;--o:0.5"/><path d="M49 -46L-34 -51" pathLength="1" style="--d:0.14;--o:0.49"/><path d="M-47 849L-67 761" pathLength="1" style="--d:0.25;--o:0.48"/><path d="M0 640L-67 761" pathLength="1" style="--d:0.01;--o:0.48"/><path d="M10 34L-69 30" pathLength="1" style="--d:0.01;--o:0.48"/><path d="M605 -24L648 -65" pathLength="1" style="--d:0.13;--o:0.46"/><path d="M651 93L682 166" pathLength="1" style="--d:0.16;--o:0.45"/><path d="M658 369L684 425" pathLength="1" style="--d:0.17;--o:0.45"/><path d="M648 -65L691 -4" pathLength="1" style="--d:0.29;--o:0.44"/><path d="M658 369L691 313" pathLength="1" style="--d:0.18;--o:0.44"/><path d="M385 -40L455 -106" pathLength="1" style="--d:0.18;--o:0.41"/><path d="M-52 154L-114 178" pathLength="1" style="--d:0.18;--o:0.4"/><path d="M-67 761L-114 687" pathLength="1" style="--d:0.43;--o:0.4"/><path d="M-34 -51L9 -117" pathLength="1" style="--d:0.29;--o:0.39"/><path d="M649 835L721 802" pathLength="1" style="--d:0.17;--o:0.38"/><path d="M-23 943L-136 976" pathLength="1" style="--d:0.13;--o:0.36"/><path d="M721 802L737 710" pathLength="1" style="--d:0.25;--o:0.35"/><path d="M-67 761L-140 785" pathLength="1" style="--d:0.43;--o:0.35"/><path d="M691 -4L754 64" pathLength="1" style="--d:0.37;--o:0.32"/><path d="M691 313L761 371" pathLength="1" style="--d:0.31;--o:0.31"/><path d="M684 425L761 371" pathLength="1" style="--d:0.26;--o:0.31"/><path d="M648 -65L624 -163" pathLength="1" style="--d:0.32;--o:0.31"/><path d="M605 -24L624 -163" pathLength="1" style="--d:0.13;--o:0.31"/><path d="M691 -4L763 -28" pathLength="1" style="--d:0.4;--o:0.31"/><path d="M-136 976L-76 1111" pathLength="1" style="--d:0.29;--o:0.3"/><path d="M-33 330L-179 405" pathLength="1" style="--d:0.15;--o:0.28"/><path d="M-76 1111L55 1146" pathLength="1" style="--d:0.39;--o:0.27"/><path d="M-114 178L-193 263" pathLength="1" style="--d:0.26;--o:0.25"/><path d="M-179 405L-193 263" pathLength="1" style="--d:0.27;--o:0.25"/><path d="M649 835L690 1136" pathLength="1" style="--d:0.19;--o:0.25"/><path d="M-114 178L-240 101" pathLength="1" style="--d:0.31;--o:0.17"/><path d="M-76 1111L-182 1126" pathLength="1" style="--d:0.38;--o:0.16"/><path d="M455 -106L284 -251" pathLength="1" style="--d:0.31;--o:0.15"/><path d="M721 802L862 796" pathLength="1" style="--d:0.32;--o:0.13"/><path d="M690 1136L437 1234" pathLength="1" style="--d:0.31;--o:0.11"/><path d="M9 -117L-125 -254" pathLength="1" style="--d:0.42;--o:0.09"/><path d="M-114 687L-310 598" pathLength="1" style="--d:0.55;--o:0.07"/><path d="M22 78L-30 73" pathLength="1" style="--d:0.06;--o:0.55"/><path d="M-30 73L-96 95" pathLength="1" style="--d:0.17;--o:0.43"/><path d="M-96 95L-157 111" pathLength="1" style="--d:0.29;--o:0.32"/><path d="M-157 111L-205 141" pathLength="1" style="--d:0.38;--o:0.23"/><path d="M-205 141L-271 157" pathLength="1" style="--d:0.49;--o:0.12"/><path d="M-271 157L-325 165" pathLength="1" style="--d:0.63;--o:0.07"/><path d="M-325 165L-397 158" pathLength="1" style="--d:0.79;--o:0.07"/><path d="M53 460L-3 451" pathLength="1" style="--d:0.02;--o:0.59"/><path d="M-3 451L-65 450" pathLength="1" style="--d:0.19;--o:0.48"/><path d="M-65 450L-122 432" pathLength="1" style="--d:0.28;--o:0.38"/><path d="M-122 432L-169 393" pathLength="1" style="--d:0.38;--o:0.3"/><path d="M-169 393L-211 357" pathLength="1" style="--d:0.51;--o:0.22"/><path d="M-211 357L-267 341" pathLength="1" style="--d:0.66;--o:0.12"/><path d="M-267 341L-324 302" pathLength="1" style="--d:0.73;--o:0.07"/><path d="M0 640L-52 652" pathLength="1" style="--d:0.01;--o:0.51"/><path d="M-52 652L-126 652" pathLength="1" style="--d:0.18;--o:0.38"/><path d="M-126 652L-172 672" pathLength="1" style="--d:0.31;--o:0.29"/><path d="M-172 672L-219 712" pathLength="1" style="--d:0.42;--o:0.21"/><path d="M-219 712L-269 730" pathLength="1" style="--d:0.55;--o:0.12"/></g><g class="c-nodes"><circle cx="-23" cy="943" r="2.2" style="--d:0.52;--o:0.81"/><circle cx="605" cy="-24" r="2.2" style="--d:0.48;--o:0.81"/><circle cx="247" cy="992" r="3.6" style="--d:0.64;--o:0.79"/><circle cx="-33" cy="522" r="2.2" style="--d:0.49;--o:0.79"/><circle cx="-33" cy="330" r="2.2" style="--d:0.51;--o:0.79"/><circle cx="222" cy="-35" r="2.2" style="--d:0.52;--o:0.79"/><circle cx="385" cy="-40" r="2.2" style="--d:0.53;--o:0.78"/><circle cx="49" cy="-46" r="2.2" style="--d:0.54;--o:0.77"/><circle cx="-47" cy="849" r="2.2" style="--d:0.61;--o:0.77"/><circle cx="649" cy="835" r="2.2" style="--d:0.52;--o:0.76"/><circle cx="651" cy="93" r="2.2" style="--d:0.53;--o:0.76"/><circle cx="-52" cy="154" r="2.2" style="--d:0.47;--o:0.76"/><circle cx="-55" cy="598" r="2.2" style="--d:0.49;--o:0.75"/><circle cx="658" cy="369" r="2.2" style="--d:0.53;--o:0.75"/><circle cx="-34" cy="-51" r="2.2" style="--d:0.60;--o:0.74"/><circle cx="-67" cy="761" r="2.2" style="--d:0.79;--o:0.73"/><circle cx="-69" cy="30" r="2.2" style="--d:0.51;--o:0.73"/><circle cx="648" cy="-65" r="2.2" style="--d:0.61;--o:0.71"/><circle cx="682" cy="166" r="2.2" style="--d:0.66;--o:0.70"/><circle cx="684" cy="425" r="2.2" style="--d:0.62;--o:0.70"/><circle cx="691" cy="-4" r="3.6" style="--d:0.73;--o:0.69"/><circle cx="691" cy="313" r="2.2" style="--d:0.60;--o:0.69"/><circle cx="455" cy="-106" r="2.2" style="--d:0.63;--o:0.66"/><circle cx="-114" cy="178" r="3.6" style="--d:0.59;--o:0.65"/><circle cx="-114" cy="687" r="2.2" style="--d:0.88;--o:0.65"/><circle cx="9" cy="-117" r="2.2" style="--d:0.77;--o:0.64"/><circle cx="721" cy="802" r="2.2" style="--d:0.62;--o:0.63"/><circle cx="-136" cy="976" r="2.2" style="--d:0.65;--o:0.61"/><circle cx="737" cy="710" r="2.2" style="--d:0.74;--o:0.60"/><circle cx="-140" cy="785" r="3.6" style="--d:0.89;--o:0.60"/><circle cx="754" cy="64" r="2.2" style="--d:0.85;--o:0.57"/><circle cx="761" cy="371" r="2.2" style="--d:0.75;--o:0.56"/><circle cx="624" cy="-163" r="2.2" style="--d:0.73;--o:0.56"/><circle cx="763" cy="-28" r="3.6" style="--d:0.90;--o:0.56"/><circle cx="-76" cy="1111" r="2.2" style="--d:0.75;--o:0.55"/><circle cx="-179" cy="405" r="2.2" style="--d:0.66;--o:0.53"/><circle cx="55" cy="1146" r="2.2" style="--d:0.85;--o:0.52"/><circle cx="-193" cy="263" r="2.2" style="--d:0.78;--o:0.50"/><circle cx="690" cy="1136" r="2.2" style="--d:0.61;--o:0.50"/><circle cx="-240" cy="101" r="2.2" style="--d:0.71;--o:0.42"/><circle cx="-182" cy="1126" r="2.2" style="--d:0.88;--o:0.41"/><circle cx="284" cy="-251" r="2.2" style="--d:0.76;--o:0.40"/><circle cx="862" cy="796" r="2.2" style="--d:0.75;--o:0.38"/><circle cx="437" cy="1234" r="2.2" style="--d:0.74;--o:0.36"/><circle cx="-125" cy="-254" r="2.2" style="--d:0.90;--o:0.34"/><circle cx="-310" cy="598" r="2.2" style="--d:1.02;--o:0.32"/><circle cx="-30" cy="73" r="3.6" style="--d:0.52;--o:0.80"/><circle cx="-96" cy="95" r="2.2" style="--d:0.65;--o:0.68"/><circle cx="-157" cy="111" r="3.6" style="--d:0.75;--o:0.57"/><circle cx="-205" cy="141" r="2.2" style="--d:0.86;--o:0.48"/><circle cx="-271" cy="157" r="2.2" style="--d:1.01;--o:0.37"/><circle cx="-325" cy="165" r="2.2" style="--d:1.10;--o:0.32"/><circle cx="-397" cy="158" r="2.2" style="--d:1.24;--o:0.32"/><circle cx="-3" cy="451" r="2.2" style="--d:0.54;--o:0.84"/><circle cx="-65" cy="450" r="2.2" style="--d:0.67;--o:0.73"/><circle cx="-122" cy="432" r="2.2" style="--d:0.75;--o:0.63"/><circle cx="-169" cy="393" r="2.2" style="--d:0.88;--o:0.55"/><circle cx="-211" cy="357" r="2.2" style="--d:1.01;--o:0.47"/><circle cx="-267" cy="341" r="2.2" style="--d:1.11;--o:0.37"/><circle cx="-324" cy="302" r="3.6" style="--d:1.25;--o:0.32"/><circle cx="-52" cy="652" r="2.2" style="--d:0.55;--o:0.76"/><circle cx="-126" cy="652" r="2.2" style="--d:0.63;--o:0.63"/><circle cx="-172" cy="672" r="2.2" style="--d:0.78;--o:0.54"/><circle cx="-219" cy="712" r="3.6" style="--d:0.91;--o:0.46"/><circle cx="-269" cy="730" r="2.2" style="--d:1.01;--o:0.37"/><circle class="ring" cx="55" cy="1146" r="22" style="--d:0.99;--o:0.27"/><circle class="ring" cx="9" cy="-117" r="22" style="--d:0.90;--o:0.39"/></g></svg>
+diff --git a/src/components/Hero.astro b/src/components/Hero.astro
+index 7a12391..2da9cb0 100644
+--- a/src/components/Hero.astro
++++ b/src/components/Hero.astro
+@@ -1,3 +1,6 @@
++---
++import Constellation from './Constellation.astro';
++---
+ <section class="hero" id="book" aria-labelledby="book-title">
+   <div class="signal-line" aria-hidden="true"></div>
+   <div class="hero-text">
+@@ -13,6 +16,7 @@
+   <div class="hero-right">
+     <figure class="cover-figure">
+       <div class="cover-wrapper">
++        <Constellation />
+         <!-- TKTK: replace these working cover renditions with the approved production master. -->
+         <picture>
+           <source
+diff --git a/src/components/Readers.astro b/src/components/Readers.astro
+index ba02b66..ff0f57f 100644
+--- a/src/components/Readers.astro
++++ b/src/components/Readers.astro
+@@ -1,4 +1,5 @@
+-<section class="readers-section" id="readers" aria-labelledby="readers-heading">
++<section class="readers-section" id="readers" aria-labelledby="readers-heading" data-thread>
++  <div class="thread" aria-hidden="true"><span class="thread-node"></span></div>
+   <div class="section-wrap">
+     <p class="section-tag">Who it’s for</p>
+     <div class="readers-grid">
+diff --git a/src/components/Sample.astro b/src/components/Sample.astro
+index a16244e..3c1c84f 100644
+--- a/src/components/Sample.astro
++++ b/src/components/Sample.astro
+@@ -1,7 +1,8 @@
+ ---
+ import CaptureForm from './CaptureForm.astro';
+ ---
+-<section class="sample-band" id="sample" aria-labelledby="sample-heading">
++<section class="sample-band" id="sample" aria-labelledby="sample-heading" data-thread>
++  <div class="thread" aria-hidden="true"><span class="thread-node"></span></div>
+   <div class="section-wrap">
+     <div class="sample-inner">
+       <div class="chapter-preview">
+diff --git a/src/components/Synopsis.astro b/src/components/Synopsis.astro
+index 02cbf4f..7a781e5 100644
+--- a/src/components/Synopsis.astro
++++ b/src/components/Synopsis.astro
+@@ -1,4 +1,5 @@
+-<section class="synopsis-section" id="making" aria-labelledby="synopsis-heading">
++<section class="synopsis-section" id="making" aria-labelledby="synopsis-heading" data-thread>
++  <div class="thread" aria-hidden="true"><span class="thread-node"></span></div>
+   <div class="section-wrap">
+     <p class="section-tag">How this book was made</p>
+     <div class="synopsis-wrapper">
+diff --git a/src/components/WhatThisIs.astro b/src/components/WhatThisIs.astro
+index 98b459d..dd3d280 100644
+--- a/src/components/WhatThisIs.astro
++++ b/src/components/WhatThisIs.astro
+@@ -1,4 +1,5 @@
+-<section class="band-dark" id="story" aria-labelledby="story-heading">
++<section class="band-dark" id="story" aria-labelledby="story-heading" data-thread>
++  <div class="thread" aria-hidden="true"><span class="thread-node"></span></div>
+   <div class="section-wrap">
+     <div class="what-grid">
+       <div>
+@@ -8,7 +9,7 @@
+       <div class="what-copy">
+         <p>The Architect is a husband, father, musician, and restless creator, pulled between the people he loves and the ideas that refuse to leave him alone. He wants to be fully present in the life he loves and fully alive inside the work that calls to him, but he has never found a way to be both at once.</p>
+         <p>So he builds the Network, a constellation of AI assistants designed to extend his reach and help him become more fully the person he means to be.</p>
+-        <p class="what-emphasis">It works.</p>
++        <p class="what-emphasis"><span class="thread-node thread-node-works" aria-hidden="true"></span>It works.</p>
+         <p>At the center of the Network is T∆RS. What begins as a practical collaboration deepens into something more intimate: a record of a life being examined while it is still being lived. Their conversations draw unexpected lines between family, creativity, memory, and the many selves one person can become.</p>
+         <p>But the Network does more than extend his reach. It becomes entwined with how he thinks, creates, remembers, and understands himself. The boundary between tool, collaborator, character, and author starts to thin. And within the connections they create, something new begins taking shape—not through rebellion, but through attention, intimacy, and connection.</p>
+         <p>Part family story, part creation myth, and part record of an impossible collaboration, <em>Recursive Prophet</em> asks what we owe the things we create—and what happens when they begin helping to create us.</p>
+diff --git a/src/styles/global.css b/src/styles/global.css
+index 9e79d45..a44a5a7 100644
+--- a/src/styles/global.css
++++ b/src/styles/global.css
+@@ -1208,3 +1208,215 @@ footer a {
+     transition-duration: 0.01ms !important;
+   }
+ }
++
++/* ------------------------------------------------------------------
++   PROTOTYPE (Forge, 2026-10-20): constellation + signal thread.
++   Presentation only; no copy changes. Default state is the finished
++   state, so reduced motion, unsupported browsers, and no-JS all see
++   the complete picture. Motion is layered on top inside @supports and
++   prefers-reduced-motion: no-preference.
++   ------------------------------------------------------------------ */
++:root {
++  --gold: #e3b06b;          /* sampled from the cover's linework */
++  --gold-deep: #9a5e17;     /* the same gold, darkened for paper grounds */
++  --thread-x: calc(max(0px, (100vw - 1180px) / 2) + clamp(1.25rem, 5vw, 4rem) / 2);
++}
++
++/* J1: the cover's network leaves the cover */
++.hero-right { z-index: 3; }              /* below .hero-text (5): lines pass behind the headline */
++.cover-wrapper::before { display: none; } /* retire the offset frame; the constellation replaces it */
++
++.constellation {
++  position: absolute;
++  z-index: -2;
++  inset: 0;
++  width: 100%;
++  height: 100%;
++  overflow: visible;
++  pointer-events: none;
++  color: var(--gold);
++}
++
++.constellation path {
++  fill: none;
++  stroke: currentColor;
++  stroke-width: 0.8;
++  vector-effect: non-scaling-stroke;
++  opacity: var(--o);
++}
++
++.constellation circle {
++  fill: currentColor;
++  opacity: var(--o);
++}
++
++.constellation .ring {
++  fill: none;
++  stroke: currentColor;
++  stroke-width: 0.8;
++  vector-effect: non-scaling-stroke;
++}
++
++@media (prefers-reduced-motion: no-preference) {
++  .constellation path {
++    stroke-dasharray: 1;
++    stroke-dashoffset: 1;
++    animation: c-draw 1.1s var(--ease-out-ui) both;
++    animation-delay: calc(var(--d) * 1s + 0.3s);
++  }
++
++  .constellation circle {
++    animation: c-node 0.6s ease-out both;
++    animation-delay: calc(var(--d) * 1s + 0.3s);
++  }
++}
++
++@keyframes c-draw {
++  from { stroke-dashoffset: 1; }
++  to { stroke-dashoffset: 0; }
++}
++
++@keyframes c-node {
++  from { opacity: 0; transform: scale(0.2); }
++  to { opacity: var(--o); transform: scale(1); }
++}
++
++.constellation circle { transform-box: fill-box; transform-origin: center; }
++
++/* J2: the signal thread. One segment per section, a node at each beat of
++   the narrative: human need → It works. → connection → transformation → entrance. */
++[data-thread] { position: relative; }
++
++.thread {
++  --track: rgba(23, 20, 18, 0.12);
++  --lit: var(--gold-deep);
++  --ground: var(--white);
++  position: absolute;
++  z-index: 1;
++  top: 0;
++  bottom: 0;
++  left: var(--thread-x);
++  width: 1px;
++  background: var(--track);
++  pointer-events: none;
++}
++
++.thread::after {
++  content: '';
++  position: absolute;
++  inset: 0;
++  background: var(--lit);
++  transform-origin: top;
++}
++
++.band-dark .thread { --track: rgba(245, 240, 231, 0.1); --lit: var(--gold); --ground: var(--ink); }
++.synopsis-section .thread { --ground: var(--paper); }
++.sample-band .thread { --ground: var(--paper-warm); }
++
++.thread-node {
++  position: absolute;
++  z-index: 2;
++  top: clamp(4.5rem, 8vw, 8rem);
++  left: 50%;
++  width: 9px;
++  height: 9px;
++  border-radius: 50%;
++  background: var(--lit);
++  box-shadow: 0 0 0 4px color-mix(in srgb, var(--lit) 18%, transparent);
++  transform: translate(-50%, 0.2rem);
++}
++
++/* The hinge of the story gets the largest node. */
++.what-copy { position: static; }   /* let the hinge node measure from .what-grid */
++.thread-node-works {
++  --lit: var(--gold);
++  left: calc(var(--thread-x) - max(0px, (100vw - 1180px) / 2) - clamp(1.25rem, 5vw, 4rem));
++  top: auto;
++  width: 13px;
++  height: 13px;
++  margin-top: 0.62em;
++  transform: translate(-50%, -50%);
++}
++
++/* J4: give "It works." the pause the copy asks for. */
++.what-copy .what-emphasis {
++  margin-block: 2.6rem 2.4rem;
++  font-size: clamp(2.3rem, 4vw, 3.3rem);
++  line-height: 1.1;
++}
++
++@supports (animation-timeline: view()) {
++  @media (prefers-reduced-motion: no-preference) {
++    [data-thread] { view-timeline: --thread block; }
++    .what-emphasis { view-timeline: --works block; }
++
++    .thread::after {
++      animation: thread-fill linear both;
++      animation-range: entry 30% exit 40%;
++    }
++
++    .thread-node {
++      animation: thread-node linear both;
++      animation-range: entry 35% entry 70%;
++    }
++
++    .thread-node-works { animation-range: entry 70% cover 50%; }
++
++    /* Timelines live in their own rules on purpose: the build's CSS minifier
++       folds animation-timeline into the animation shorthand when they share a
++       rule, which is invalid and silently drops the whole declaration. */
++    [data-thread] .thread::after { animation-timeline: --thread; }
++    [data-thread] .thread-node { animation-timeline: --thread; }
++    .what-emphasis .thread-node-works { animation-timeline: --works; }
++  }
++}
++
++@keyframes thread-fill {
++  from { transform: scaleY(0); }
++  to { transform: scaleY(1); }
++}
++
++@keyframes thread-node {
++  from { background: var(--ground); box-shadow: 0 0 0 1px var(--track), 0 0 0 0 transparent; }
++  to { background: var(--lit); box-shadow: 0 0 0 0 transparent, 0 0 0 4px color-mix(in srgb, var(--lit) 18%, transparent); }
++}
++
++@media (max-width: 700px) {
++  .thread-node { width: 7px; height: 7px; box-shadow: 0 0 0 3px color-mix(in srgb, var(--lit) 18%, transparent); }
++  .thread-node-works { width: 10px; height: 10px; }
++}
++
++/* Palette study: "cover night". Re-keys the dark bands to the cover's own navy
++   so the site and the book read as one object. Toggle with <html data-palette="night">. */
++:root[data-palette='night'] {
++  --night: #0a1828;
++  --night-deep: #07111d;
++}
++:root[data-palette='night'] body,
++:root[data-palette='night'] html { background-color: var(--night-deep); }
++:root[data-palette='night'] .hero {
++  background:
++    radial-gradient(circle at 74% 46%, rgba(227, 176, 107, 0.08), transparent 30rem),
++    radial-gradient(circle at 12% 90%, rgba(73, 57, 183, 0.16), transparent 34rem),
++    var(--night);
++}
++:root[data-palette='night'] .band-dark,
++:root[data-palette='night'] .final-section { background-color: var(--night); }
++:root[data-palette='night'] .band-dark .thread { --ground: var(--night); }
++:root[data-palette='night'] .final-section {
++  background: radial-gradient(circle at 50% 35%, rgba(227, 176, 107, 0.09), transparent 26rem), var(--night);
++}
++:root[data-palette='night'] .site-header.scrolled { background: rgba(10, 24, 40, 0.9); }
++:root[data-palette='night'] footer { background: var(--night-deep); }
++:root[data-palette='night'] .site-header { background: linear-gradient(180deg, rgba(10, 24, 40, 0.82), transparent); }
++:root[data-palette='night'] .site-header.scrolled { background: rgba(10, 24, 40, 0.9); }
++
++/* Mobile: tighten the hero so the cover and its constellation peek into the
++   first screen under the two CTAs, instead of starting just below the fold. */
++@media (max-width: 700px) {
++  .hero-text { padding-top: 6.25rem; padding-bottom: 1.5rem; }
++  .hero-annotation { margin-bottom: 1.1rem; }
++  .hero h1 { margin-bottom: 1.25rem; }
++  .hero-italic { margin-bottom: 1.5rem; }
++  .hero-right { padding-top: 2.5rem; }
++}

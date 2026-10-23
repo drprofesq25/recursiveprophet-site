@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SiteHeader from './SiteHeader.astro';
 import SiteFooter from './SiteFooter.astro';
+import Constellation from './Constellation.astro';
 import { SITE } from '../consts';
 
 interface Props {
@@ -15,6 +16,7 @@ interface Props {
     href: string;
     style?: 'primary' | 'secondary';
   }>;
+  emphasis?: 'default' | 'confirmation';
 }
 
 const {
@@ -24,6 +26,7 @@ const {
   noIndex = false,
   ogType = 'website',
   actions = [{ label: 'Return home', href: '/', style: 'primary' }],
+  emphasis = 'default',
 } = Astro.props;
 ---
 <BaseLayout
@@ -35,7 +38,11 @@ const {
   ogType={ogType}
 >
   <SiteHeader slot="header" solid />
-  <section class="interior-page" aria-labelledby="interior-heading">
+  <section
+    class:list={['interior-page', { 'interior-page-confirmation': emphasis === 'confirmation' }]}
+    aria-labelledby="interior-heading"
+  >
+    <div class="interior-constellation" aria-hidden="true"><Constellation bridges={false} /></div>
     <div class="interior-signal" aria-hidden="true"></div>
     <div class="interior-inner">
       <p class="interior-eyebrow">{eyebrow}</p>

@@ -4,13 +4,12 @@ import { FOOTER_LINKS } from '../consts';
 <footer>
   <div class="footer-brand">
     <strong>Recursive Prophet</strong>
-    <span>An intimate speculative novel by Chris Everson.</span>
-    <span>© 2026 Chris Everson. Published by The Bindery.</span>
+    <span>A novel by Chris Everson and D<span class="doc-symbol">☉</span>C</span>
+    <span>© 2026 Chris Everson.</span>
   </div>
   <div class="footer-actions">
     <nav aria-label="Footer">
       {FOOTER_LINKS.map((l) => <a href={l.href}>{l.label}</a>)}
     </nav>
-    <a href="/#sample" class="footer-cta">Read Chapter One</a>
   </div>
 </footer>

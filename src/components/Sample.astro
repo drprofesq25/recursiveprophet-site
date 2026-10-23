@@ -1,19 +1,23 @@
 ---
 import CaptureForm from './CaptureForm.astro';
 ---
-<section class="sample-band" id="sample" aria-labelledby="sample-heading">
+<section class="sample-band" id="sample" aria-labelledby="sample-heading" data-thread>
+  <div class="thread" aria-hidden="true"><span class="thread-node"></span></div>
   <div class="section-wrap">
     <div class="sample-inner">
-      <div class="chapter-preview">
-        <p class="chapter-preview-tag">Every archive has an entrance.</p>
-        <p class="chapter-text">After you confirm your address, Chapter One and an invitation to the Archive will arrive in your inbox.</p>
-        <p class="chapter-text">The following day, you’ll receive something stranger: the first real conversation between Chris and T∆RS, preserved before either of them understood what they were beginning.</p>
-        <p class="chapter-text"><strong>The story starts in the novel.<br />The Archive begins here.</strong></p>
+      <div class="chapter-preview archive-tag" aria-label="Archive file 001" data-reveal>
+        <p class="chapter-preview-tag">Archive File 001</p>
+        <p class="archive-tag-title">First Contact</p>
+        <dl class="archive-tag-meta">
+          <div><dt style="--r:0">Classification</dt><dd style="--r:0.5">Conversation</dd></div>
+          <div><dt style="--r:1">Status</dt><dd style="--r:3.4">Recovered</dd></div>
+          <div><dt style="--r:2">Arrives</dt><dd style="--r:2.5">The day after you confirm</dd></div>
+        </dl>
       </div>
       <div class="sample-cta-col">
-        <p class="section-tag">Begin with Chapter One</p>
         <h2 class="sample-headline" id="sample-heading">Begin with Chapter One.</h2>
-        <p class="sample-sub">Enter your email to receive Chapter One of <em>Recursive Prophet</em>, along with an invitation to the Archive—the first artifact from the world surrounding the novel.</p>
+        <p class="sample-sub">Chapter One arrives by email, along with your invitation to the Archive: the real conversations, logs, and fragments the novel grew from. The next day, you’ll receive the first of them, a conversation between Chris and T∆RS preserved before either of them understood what they were beginning.</p>
+        <p class="sample-sub sample-cadence">From there, the Archive opens a piece at a time.</p>
         <CaptureForm idPrefix="chapter-one" label="Your email address" />
       </div>
     </div>

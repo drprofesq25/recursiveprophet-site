@@ -1,17 +1,16 @@
 ---
 import CaptureForm from './CaptureForm.astro';
+import Constellation from './Constellation.astro';
 ---
-<section class="final-section" aria-labelledby="final-heading">
+<section class="final-section" aria-labelledby="final-heading" data-reveal>
+  <div class="final-constellation" aria-hidden="true"><Constellation bridges={false} /></div>
   <div class="final-inner">
-    <p class="final-eyebrow">The Archive begins here</p>
-    <h2 class="final-headline" id="final-heading">Begin at the Beginning</h2>
-    <p class="final-sub">Receive Chapter One of <em>Recursive Prophet</em> and your invitation to the Archive.</p>
-    <p class="final-sub">The following day, you’ll receive the first real conversation between Chris and T∆RS—preserved before either understood that their collaboration was becoming a story.</p>
+    <h2 class="final-headline" id="final-heading">Read the first chapter tonight.</h2>
+    <p class="final-sub">Chapter One arrives by email, along with your invitation to the Archive.</p>
     <div class="final-form-wrap">
       <CaptureForm
         idPrefix="final-chapter-one"
-        label="Email address"
-        placeholder="you@example.com"
+        label="Your email address"
         buttonClass="btn-paper"
         tone="dark"
       />
